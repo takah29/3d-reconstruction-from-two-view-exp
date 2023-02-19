@@ -107,6 +107,12 @@ class AffineTransform:
 
         return AffineTransform(self.M @ M)
 
+    def get_A_and_t(self):
+        """変換行列Aと並進tを取得する"""
+        A = self.M[:3, :3]
+        t = self.M[3, :3]
+        return A, t
+
     def to_inv(self):
         """逆変換行列を取得する
 
@@ -163,3 +169,8 @@ if __name__ == "__main__":
     # scale_x test
     X_ = at.scale_z(2.0).apply(X)
     nptest.assert_array_almost_equal(X_, np.array([[1, 0, 0], [0, 1, 0], [0, 0, 2]]), 8.0)
+
+    # get_rotation_and_transform test
+    A, t = at.rot_x(np.pi / 2.0).trans([1, 1, 1]).get_A_and_t()
+    nptest.assert_array_almost_equal(A, np.array([[1, 0, 0], [0, 0, 1], [0, -1, 0]]))
+    nptest.assert_array_almost_equal(t, np.array([1, 1, 1]))
