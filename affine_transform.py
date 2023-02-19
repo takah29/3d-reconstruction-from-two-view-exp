@@ -151,3 +151,15 @@ if __name__ == "__main__":
     # ref_z test
     X_ = at.ref_z().apply(X)
     nptest.assert_array_almost_equal(X_, np.array([[1, 0, 0], [0, 1, 0], [0, 0, -1]]), 8.0)
+
+    # scale_x test
+    X_ = at.scale_x(2.0).apply(X)
+    nptest.assert_array_almost_equal(X_, np.array([[2, 0, 0], [0, 1, 0], [0, 0, 1]]), 8.0)
+
+    # scale_y test
+    X_ = at.scale_y(2.0).apply(X)
+    nptest.assert_array_almost_equal(X_, np.array([[1, 0, 0], [0, 2, 0], [0, 0, 1]]), 8.0)
+
+    # scale_x test
+    X_ = at.scale_z(2.0).apply(X)
+    nptest.assert_array_almost_equal(X_, np.array([[1, 0, 0], [0, 1, 0], [0, 0, 2]]), 8.0)
