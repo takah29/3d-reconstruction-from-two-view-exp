@@ -2,7 +2,7 @@ import numpy as np
 
 
 class AffineTransform:
-    """アフィン変換クラス（横ベクトル）"""
+    """3次元アフィン変換クラス（横ベクトル）"""
 
     def __init__(self, M=None):
         if M is not None:
@@ -11,18 +11,18 @@ class AffineTransform:
         else:
             self.M = np.eye(4)
 
-        return self.M
-
     def to_array(self):
+        """ndarrayに変換する"""
         return self.M
 
     def trans(self, t):
         """並進tを適用する"""
+        t = np.asarray(t)
         assert t.shape == (3,)
 
-        M = np.block([[np.eye(3), np.zeros((1, 3))], [t[np.newaxis, :], 1]])
+        M = np.block([[np.eye(3), np.zeros((3, 1))], [t, 1]])
 
-        return self.A @ M
+        return AffineTransform(self.M @ M)
 
     def rot_x(self, theta):
         """x軸theta回転を適用する"""
@@ -33,7 +33,7 @@ class AffineTransform:
         )
         M = np.block([[R, np.zeros((1, 3))], [np.zeros(3), 1.0]])
 
-        return self.M @ M
+        return AffineTransform(self.M @ M)
 
     def rot_y(self, theta):
         """y軸theta回転を適用する"""
@@ -44,7 +44,7 @@ class AffineTransform:
         )
         M = np.block([[R, np.zeros((1, 3))], [np.zeros(3), 1.0]])
 
-        return self.M @ M
+        return AffineTransform(self.M @ M)
 
     def rot_z(self, theta):
         """z軸theta回転を適用する"""
@@ -55,28 +55,28 @@ class AffineTransform:
         )
         M = np.block([[R, np.zeros((1, 3))], [np.zeros(3), 1.0]])
 
-        return self.M @ M
+        return AffineTransform(self.M @ M)
 
     def ref_x(self):
         """x軸の鏡映を適用する"""
         M = np.eye(3)
         M[0, 0] = -1.0
 
-        return self.M @ M
+        return AffineTransform(self.M @ M)
 
     def ref_y(self):
         """y軸の鏡映を適用する"""
         M = np.eye(3)
         M[1, 1] = -1.0
 
-        return self.M @ M
+        return AffineTransform(self.M @ M)
 
     def ref_z(self):
         """z軸の鏡映を適用する"""
         M = np.eye(3)
         M[2, 2] = -1.0
 
-        return self.M @ M
+        return AffineTransform(self.M @ M)
 
     def scale_x(self, scale):
         """x軸のスケール変換を適用する"""
@@ -88,10 +88,14 @@ class AffineTransform:
         M = np.eye(3)
         M[1, 1] = scale
 
+        return AffineTransform(self.M @ M)
+
     def scale_z(self, scale):
         """z軸のスケール変換を適用する"""
         M = np.eye(3)
         M[2, 2] = scale
+
+        return AffineTransform(self.M @ M)
 
     def to_inv(self):
         """逆変換行列を取得する"""
