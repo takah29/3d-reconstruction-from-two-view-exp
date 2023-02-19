@@ -33,7 +33,7 @@ class AffineTransform:
         return AffineTransform(self.M @ M)
 
     def rot_x(self, theta):
-        """x軸theta回転を適用する"""
+        """x軸theta角回転を適用する"""
         assert isinstance(theta, (float, int))
 
         R = np.array(
@@ -44,7 +44,7 @@ class AffineTransform:
         return AffineTransform(self.M @ M)
 
     def rot_y(self, theta):
-        """y軸theta回転を適用する"""
+        """y軸theta角回転を適用する"""
         assert isinstance(theta, (float, int))
 
         R = np.array(
@@ -55,13 +55,37 @@ class AffineTransform:
         return AffineTransform(self.M @ M)
 
     def rot_z(self, theta):
-        """z軸theta回転を適用する"""
+        """z軸theta角回転を適用する"""
         assert isinstance(theta, (float, int))
 
         R = np.array(
             [[np.cos(theta), np.sin(theta), 0], [-np.sin(theta), np.cos(theta), 0], [0, 0, 1]]
         )
         M = np.block([[R, np.zeros((3, 1))], [np.zeros(3), 1.0]])
+
+        return AffineTransform(self.M @ M)
+
+    def rot(self, theta, axis_vec):
+        """指定の軸ベクトル周りにtheta角回転を適用する"""
+        axis_vec = np.asarray(axis_vec)
+
+        assert axis_vec.shape == (3,)
+        assert isinstance(theta, (int, float))
+
+        R1 = (1 - np.cos(theta)) * np.ones((3, 3))
+        R2 = axis_vec[:, np.newaxis] @ axis_vec[:, np.newaxis].T
+        R3 = np.sin(theta) * np.ones((3, 3))
+        R3[(0, 1, 2), (0, 1, 2)] = np.cos(theta)
+        R4 = np.array(
+            [
+                [1, -axis_vec[2], axis_vec[1]],
+                [axis_vec[2], 1, -axis_vec[0]],
+                [-axis_vec[1], axis_vec[0], 1],
+            ]
+        )
+
+        R = R1 * R2 + R3 * R4
+        M = np.block([[R.T, np.zeros((3, 1))], [np.zeros(3), 1.0]])
 
         return AffineTransform(self.M @ M)
 
@@ -174,3 +198,7 @@ if __name__ == "__main__":
     A, t = at.rot_x(np.pi / 2.0).trans([1, 1, 1]).get_A_and_t()
     nptest.assert_array_almost_equal(A, np.array([[1, 0, 0], [0, 0, 1], [0, -1, 0]]))
     nptest.assert_array_almost_equal(t, np.array([1, 1, 1]))
+
+    # rot test
+    X_ = at.rot(np.pi / 2.0, [0, 0, 1]).apply(X)
+    nptest.assert_array_almost_equal(X_, np.array([[0, 1, 0], [-1, 0, 0], [0, 0, 1]]), 8.0)
