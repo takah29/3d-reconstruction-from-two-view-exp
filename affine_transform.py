@@ -39,7 +39,7 @@ class AffineTransform:
         R = np.array(
             [[1, 0, 0], [0, np.cos(theta), np.sin(theta)], [0, -np.sin(theta), np.cos(theta)]]
         )
-        M = np.block([[R, np.zeros((1, 3))], [np.zeros(3), 1.0]])
+        M = np.block([[R, np.zeros((3, 1))], [np.zeros(3), 1.0]])
 
         return AffineTransform(self.M @ M)
 
@@ -48,9 +48,9 @@ class AffineTransform:
         assert isinstance(theta, (float, int))
 
         R = np.array(
-            [[np.cos(theta), 0, np.sin(theta)], [0, 1, 0], [-np.sin(theta), 0, np.cos(theta)]]
+            [[np.cos(theta), 0, -np.sin(theta)], [0, 1, 0], [np.sin(theta), 0, np.cos(theta)]]
         )
-        M = np.block([[R, np.zeros((1, 3))], [np.zeros(3), 1.0]])
+        M = np.block([[R, np.zeros((3, 1))], [np.zeros(3), 1.0]])
 
         return AffineTransform(self.M @ M)
 
@@ -61,46 +61,46 @@ class AffineTransform:
         R = np.array(
             [[np.cos(theta), np.sin(theta), 0], [-np.sin(theta), np.cos(theta), 0], [0, 0, 1]]
         )
-        M = np.block([[R, np.zeros((1, 3))], [np.zeros(3), 1.0]])
+        M = np.block([[R, np.zeros((3, 1))], [np.zeros(3), 1.0]])
 
         return AffineTransform(self.M @ M)
 
     def ref_x(self):
         """x軸の鏡映を適用する"""
-        M = np.eye(3)
+        M = np.eye(4)
         M[0, 0] = -1.0
 
         return AffineTransform(self.M @ M)
 
     def ref_y(self):
         """y軸の鏡映を適用する"""
-        M = np.eye(3)
+        M = np.eye(4)
         M[1, 1] = -1.0
 
         return AffineTransform(self.M @ M)
 
     def ref_z(self):
         """z軸の鏡映を適用する"""
-        M = np.eye(3)
+        M = np.eye(4)
         M[2, 2] = -1.0
 
         return AffineTransform(self.M @ M)
 
     def scale_x(self, scale):
         """x軸のスケール変換を適用する"""
-        M = np.eye(3)
+        M = np.eye(4)
         M[0, 0] = scale
 
     def scale_y(self, scale):
         """y軸のスケール変換を適用する"""
-        M = np.eye(3)
+        M = np.eye(4)
         M[1, 1] = scale
 
         return AffineTransform(self.M @ M)
 
     def scale_z(self, scale):
         """z軸のスケール変換を適用する"""
-        M = np.eye(3)
+        M = np.eye(4)
         M[2, 2] = scale
 
         return AffineTransform(self.M @ M)
