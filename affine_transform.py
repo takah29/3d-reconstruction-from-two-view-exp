@@ -106,9 +106,13 @@ class AffineTransform:
         return AffineTransform(self.M @ M)
 
     def to_inv(self):
-        """逆変換行列を取得する"""
-        Ainv = np.linalg.inv(self.M[:2, :2])
-        t = self.M[3, :3]
-        M = np.block([[Ainv, -t @ Ainv], [np.zeros((1, 3)), 1]])
+        """逆変換行列を取得する
 
-        return M
+        M^(-1) = [
+            [Ainv            , -t @ Ainv],
+            [np.zeros((1, 3)), 1        ]
+        ]
+        """
+        return np.linalg.inv(self.M)
+
+
