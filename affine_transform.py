@@ -116,3 +116,36 @@ class AffineTransform:
         return np.linalg.inv(self.M)
 
 
+if __name__ == "__main__":
+    import numpy.testing as nptest
+
+    X = np.eye(3)
+    at = AffineTransform()
+
+    # trans test
+    X_ = at.trans([1, 1, 1]).apply(X)
+    nptest.assert_array_almost_equal(X_, np.array([[2, 1, 1], [1, 2, 1], [1, 1, 2]]), 8.0)
+
+    # rot_x test
+    X_ = at.rot_x(np.pi / 2.0).apply(X)
+    nptest.assert_array_almost_equal(X_, np.array([[1, 0, 0], [0, 0, 1], [0, -1, 0]]), 8.0)
+
+    # rot_y test
+    X_ = at.rot_y(np.pi / 2.0).apply(X)
+    nptest.assert_array_almost_equal(X_, np.array([[0, 0, -1], [0, 1, 0], [1, 0, 0]]), 8.0)
+
+    # rot_z test
+    X_ = at.rot_z(np.pi / 2.0).apply(X)
+    nptest.assert_array_almost_equal(X_, np.array([[0, 1, 0], [-1, 0, 0], [0, 0, 1]]), 8.0)
+
+    # ref_x test
+    X_ = at.ref_x().apply(X)
+    nptest.assert_array_almost_equal(X_, np.array([[-1, 0, 0], [0, 1, 0], [0, 0, 1]]), 8.0)
+
+    # ref_y test
+    X_ = at.ref_y().apply(X)
+    nptest.assert_array_almost_equal(X_, np.array([[1, 0, 0], [0, -1, 0], [0, 0, 1]]), 8.0)
+
+    # ref_z test
+    X_ = at.ref_z().apply(X)
+    nptest.assert_array_almost_equal(X_, np.array([[1, 0, 0], [0, 1, 0], [0, 0, -1]]), 8.0)
