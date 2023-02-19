@@ -15,6 +15,14 @@ class AffineTransform:
         """ndarrayに変換する"""
         return self.M
 
+    def apply(self, X):
+        """データ行列Xに対して変換を適用する"""
+        assert X.shape[1] == 3
+
+        X_ = np.hstack((X, np.ones((X.shape[0], 1))))
+
+        return (X_ @ self.M)[:, :3]
+
     def trans(self, t):
         """並進tを適用する"""
         t = np.asarray(t)
