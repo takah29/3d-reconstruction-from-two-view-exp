@@ -91,6 +91,8 @@ class AffineTransform:
         M = np.eye(4)
         M[0, 0] = scale
 
+        return AffineTransform(self.M @ M)
+
     def scale_y(self, scale):
         """y軸のスケール変換を適用する"""
         M = np.eye(4)
