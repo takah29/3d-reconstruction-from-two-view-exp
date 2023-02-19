@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+from numpy.typing import NDArray
 
 
 def init_3d_ax():
@@ -17,7 +18,7 @@ def init_3d_ax():
     return ax
 
 
-def plot_basis(pos, basis, ax, label=None):
+def plot_basis(pos: NDArray, basis: NDArray, ax, label=None) -> None:
     """
     基底をプロットする。回転行列のプロットにも使用できる。
     """
@@ -33,7 +34,7 @@ def plot_basis(pos, basis, ax, label=None):
         ax.text(pos[0], pos[1], pos[2] + 1.0, label)
 
 
-def plot_points(points, ax, color="black"):
+def plot_points(points: NDArray, ax, color="black") -> None:
     ax.scatter(points[:, 0], points[:, 1], points[:, 2], c=color, marker="o")
 
 

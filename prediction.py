@@ -1,8 +1,9 @@
 import numpy as np
+from numpy.typing import NDArray
 from utils import unit_vec
 
 
-def predict_motion_no_error(X, Y):
+def predict_motion_no_error(X: NDArray, Y: NDArray) -> tuple[NDArray, NDArray]:
     """誤差がないデータから、並進tと回転Rを推定する"""
     xc = np.mean(X, axis=0)
     yc = np.mean(Y, axis=0)
@@ -26,7 +27,7 @@ def predict_motion_no_error(X, Y):
     return t, R
 
 
-def predict_motion(X, Y):
+def predict_motion(X: NDArray, Y: NDArray) -> tuple[NDArray, NDArray]:
     """誤差があるデータから、並進tと回転Rを推定する"""
     xc = np.mean(X, axis=0)
     yc = np.mean(Y, axis=0)
@@ -42,12 +43,12 @@ def predict_motion(X, Y):
     return t, R
 
 
-def is_optimized_rotation_matrix(R):
+def is_optimized_rotation_matrix(R: NDArray) -> bool:
     """回転行列の最適性を判定する"""
     return np.linalg.det(R) - 1 < 1e-8
 
 
-def correct_rotation_matrix(R):
+def correct_rotation_matrix(R: NDArray) -> NDArray:
     """回転行列の最適補正を行う"""
     R = R.T
     U, S, Vt = np.linalg.svd(R)
