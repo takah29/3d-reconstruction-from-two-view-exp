@@ -2,7 +2,7 @@ import numpy as np
 
 
 class AffineTransform:
-    """3次元アフィン変換クラス（横ベクトル）"""
+    """3次元アフィン変換クラス"""
 
     def __init__(self, M=None):
         if M is not None:

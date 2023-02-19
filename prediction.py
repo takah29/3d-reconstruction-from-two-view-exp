@@ -4,7 +4,10 @@ from utils import unit_vec
 
 
 def predict_motion_no_error(X: NDArray, Y: NDArray) -> tuple[NDArray, NDArray]:
-    """誤差がないデータから、並進tと回転Rを推定する"""
+    """誤差がないデータから、並進tと回転Rを推定する
+
+    ※ カメラ座標とワールド座標の変換などに使用できる
+    """
     xc = np.mean(X, axis=0)
     yc = np.mean(Y, axis=0)
     t = yc - xc
