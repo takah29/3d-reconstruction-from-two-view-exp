@@ -1,6 +1,6 @@
 import numpy as np
 from numpy.typing import NDArray
-from utils import unit_vec
+from .utils import unit_vec
 
 
 def get_rotation_matrix(l_: NDArray, omega: float) -> NDArray:

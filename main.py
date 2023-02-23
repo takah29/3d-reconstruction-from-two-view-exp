@@ -1,15 +1,15 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from conversion import get_rotation_axis_and_angle, get_rotation_matrix
-from prediction import (
+from lib.conversion import get_rotation_axis_and_angle, get_rotation_matrix
+from lib.prediction import (
     correct_rotation_matrix,
     is_optimized_rotation_matrix,
     predict_motion,
     predict_motion_no_error,
 )
-from utils import add_noise, sample_normal_dist, unit_vec
-from visualization import init_3d_ax, plot_basis, plot_points
+from lib.utils import add_noise, sample_normal_dist, unit_vec
+from lib.visualization import init_3d_ax, plot_basis, plot_points
 
 np.random.seed(2)
 

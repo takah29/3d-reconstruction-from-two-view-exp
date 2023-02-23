@@ -1,6 +1,6 @@
 import numpy as np
 from numpy.typing import NDArray
-from utils import unit_vec
+from .utils import unit_vec
 
 
 def predict_motion_no_error(X: NDArray, Y: NDArray) -> tuple[NDArray, NDArray]:
