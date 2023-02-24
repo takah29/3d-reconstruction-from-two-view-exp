@@ -49,6 +49,7 @@ def calc_focal_length(F, f0):
     # 最小固有値に対する固有ベクトルを取得する
     FFt = F @ F.T
     FtF = F.T @ F
+
     e = np.linalg.eig(FFt)[1][-1]
     e_prime = np.linalg.eig(FtF)[1][-1]
 
@@ -57,8 +58,8 @@ def calc_focal_length(F, f0):
     Ftk = F.T @ k
     Fk_norm2 = np.linalg.norm(Fk) ** 2
     Ftk_norm2 = np.linalg.norm(Ftk) ** 2
-    e_cross_k_norm2 = np.linalg.norm(np.cross(e, k)) ** 2
-    e_prime_cross_k_norm2 = np.linalg.norm(np.cross(e_prime, k)) ** 2
+    e_cross_k_norm2 = np.linalg.norm(np.cross(e, k.T)) ** 2
+    e_prime_cross_k_norm2 = np.linalg.norm(np.cross(e_prime, k.T)) ** 2
     k_dot_Fk = k.T @ Fk
     k_dot_FFtFk = k.T @ (FFt @ Fk)
 
@@ -69,8 +70,8 @@ def calc_focal_length(F, f0):
         e_cross_k_norm2 * Fk_norm2 - k_dot_Fk**2
     )
 
-    f = f0 / (np.sqrt(1 + xi))
-    f_prime = f0 / (np.sqrt(1 + ita))
+    f = f0 / np.sqrt(1 + xi[0][0])
+    f_prime = f0 / np.sqrt(1 + ita[0][0])
 
     return f, f_prime
 
