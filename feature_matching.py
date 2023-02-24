@@ -44,6 +44,13 @@ def get_keypoint_matrix(key_point1, query_indices, key_point2, train_indices):
     return X1, X2
 
 
+def get_camera_matrix(f, f_prime, R, t, f0):
+    P = np.diag((f, f, f0)) @ np.block([np.eye(3), np.zeros((3, 1))])
+    P_prime = np.diag((f_prime, f_prime, f0)) @ np.block([R.T, -R.T @ t[:, np.newaxis]])
+
+    return P, P_prime
+
+
 def calc_focal_length(F, f0):
     """基礎行列Fから焦点距離f,f_primeを計算する"""
     # 最小固有値に対する固有ベクトルを取得する
