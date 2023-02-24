@@ -105,6 +105,30 @@ def calc_motion_parameters(F, X1, X2, f, f_prime, f0):
     return R, t
 
 
+def reconstruct_3d_points(X1, X2, P, P_prime, f0):
+    # (4, 4)
+    K1 = f0 * np.vstack((P[:2], P_prime[:2]))
+
+    # (4, 4)
+    K2 = np.vstack(
+        (
+            np.repeat(P[-1][np.newaxis, :], 2, axis=0),
+            np.repeat(P_prime[-1][np.newaxis, :], 2, axis=0),
+        )
+    )
+
+    # (n, 4, 4)
+    K3 = np.repeat(np.hstack((X1, X2))[:, :, np.newaxis], 4, axis=2)
+
+    K = K1 - K2 * K3
+    T = K[:, :, :3]
+    p = K[:, :, -1:]
+    print((np.linalg.pinv(T)).shape, p.shape)
+    X_ = -np.linalg.pinv(T) @ p
+
+    return X_
+
+
 def main():
     img1 = cv2.imread("./images/002.jpg")
     img2 = cv2.imread("./images/003.jpg")
