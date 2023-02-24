@@ -2,7 +2,7 @@ import numpy as np
 import cv2
 
 
-def calc_fundamental_matrix(X1, X2):
+def calc_fundamental_matrix_8points_method(X1, X2):
     """8点法で基礎行列Fを求める
 
     f = ravel(F) として Mf = 0 を解く
@@ -44,6 +44,37 @@ def get_keypoint_matrix(key_point1, query_indices, key_point2, train_indices):
     return X1, X2
 
 
+def calc_focal_length(F, f0):
+    """基礎行列Fから焦点距離f,f_primeを計算する"""
+    # 最小固有値に対する固有ベクトルを取得する
+    FFt = F @ F.T
+    FtF = F.T @ F
+    e = np.linalg.eig(FFt)[1][-1]
+    e_prime = np.linalg.eig(FtF)[1][-1]
+
+    k = np.array([[0.0], [0.0], [1.0]])
+    Fk = F @ k
+    Ftk = F.T @ k
+    Fk_norm2 = np.linalg.norm(Fk) ** 2
+    Ftk_norm2 = np.linalg.norm(Ftk) ** 2
+    e_cross_k_norm2 = np.linalg.norm(np.cross(e, k)) ** 2
+    e_prime_cross_k_norm2 = np.linalg.norm(np.cross(e_prime, k)) ** 2
+    k_dot_Fk = k.T @ Fk
+    k_dot_FFtFk = k.T @ (FFt @ Fk)
+
+    xi = (Fk_norm2 - (k_dot_FFtFk * e_prime_cross_k_norm2 / k_dot_Fk)) / (
+        e_prime_cross_k_norm2 * Ftk_norm2 - k_dot_Fk**2
+    )
+    ita = (Ftk_norm2 - (k_dot_FFtFk * e_cross_k_norm2 / k_dot_Fk)) / (
+        e_cross_k_norm2 * Fk_norm2 - k_dot_Fk**2
+    )
+
+    f = f0 / (np.sqrt(1 + xi))
+    f_prime = f0 / (np.sqrt(1 + ita))
+
+    return f, f_prime
+
+
 def main():
     img1 = cv2.imread("./images/002.jpg")
     img2 = cv2.imread("./images/003.jpg")
@@ -83,7 +114,7 @@ def main():
     X1, X2 = get_keypoint_matrix(key_point1, query_indices, key_point2, train_indices)
     print(X1.shape, X2.shape)
 
-    F = calc_fundamental_matrix(X1, X2)
+    F = calc_fundamental_matrix_8points_method(X1, X2)
 
 
 if __name__ == "__main__":
