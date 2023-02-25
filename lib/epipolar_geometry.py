@@ -2,6 +2,59 @@ import numpy as np
 import cv2
 
 
+def get_corresponding_indices(matches):
+    query_indices = [x[0].queryIdx for x in matches]
+    train_indices = [x[0].trainIdx for x in matches]
+
+    return query_indices, train_indices
+
+
+def get_keypoint_matrix(key_point1, query_indices, key_point2, train_indices):
+    X1 = np.vstack([key_point1[i].pt for i in query_indices])
+    X2 = np.vstack([key_point2[i].pt for i in train_indices])
+
+    return X1, X2
+
+
+def detect_corresponding_points(img1, img2):
+    """2つの画像から対応点を検出する"""
+    detector = cv2.AKAZE_create()
+
+    key_point1, descript1 = detector.detectAndCompute(img1, None)
+    key_point2, descript2 = detector.detectAndCompute(img2, None)
+
+    bf_matcher = cv2.BFMatcher(cv2.NORM_HAMMING)
+
+    matches = bf_matcher.knnMatch(descript1, descript2, k=2)
+
+    ratio = 0.7
+    good_matches = []
+    for m, n in matches:
+        if m.distance < ratio * n.distance:
+            good_matches.append([m])
+
+    good_matches = sorted(good_matches, key=lambda x: x[0].distance)
+
+    # img3 = cv2.drawMatchesKnn(
+    #     img1,
+    #     key_point1,
+    #     img2,
+    #     key_point2,
+    #     good_matches,
+    #     None,
+    #     flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS,
+    # )
+
+    # cv2.imshow("image", img3)
+    # cv2.waitKey()
+
+    query_indices, train_indices = get_corresponding_indices(good_matches)
+
+    X1, X2 = get_keypoint_matrix(key_point1, query_indices, key_point2, train_indices)
+
+    return X1, X2
+
+
 def calc_fundamental_matrix_8points_method(X1, X2):
     """8点法で基礎行列Fを求める
 
@@ -28,27 +81,6 @@ def calc_fundamental_matrix_8points_method(X1, X2):
     F = U @ np.diag(S) @ V
 
     return F
-
-
-def get_corresponding_indices(matches):
-    query_indices = [x[0].queryIdx for x in matches]
-    train_indices = [x[0].trainIdx for x in matches]
-
-    return query_indices, train_indices
-
-
-def get_keypoint_matrix(key_point1, query_indices, key_point2, train_indices):
-    X1 = np.vstack([key_point1[i].pt for i in query_indices])
-    X2 = np.vstack([key_point2[i].pt for i in train_indices])
-
-    return X1, X2
-
-
-def get_camera_matrix(f, f_prime, R, t, f0):
-    P = np.diag((f, f, f0)) @ np.block([np.eye(3), np.zeros((3, 1))])
-    P_prime = np.diag((f_prime, f_prime, f0)) @ np.block([R.T, -R.T @ t[:, np.newaxis]])
-
-    return P, P_prime
 
 
 def calc_focal_length(F, f0):
@@ -105,6 +137,13 @@ def calc_motion_parameters(F, X1, X2, f, f_prime, f0):
     return R, t
 
 
+def get_camera_matrix(f, f_prime, R, t, f0):
+    P = np.diag((f, f, f0)) @ np.block([np.eye(3), np.zeros((3, 1))])
+    P_prime = np.diag((f_prime, f_prime, f0)) @ np.block([R.T, -R.T @ t[:, np.newaxis]])
+
+    return P, P_prime
+
+
 def reconstruct_3d_points(X1, X2, P, P_prime, f0):
     # (4, 4)
     K1 = f0 * np.vstack((P[:2], P_prime[:2]))
@@ -127,42 +166,3 @@ def reconstruct_3d_points(X1, X2, P, P_prime, f0):
     X_ = -np.linalg.pinv(T) @ p
 
     return X_
-
-
-def detect_corresponding_points(img1, img2):
-    """2つの画像から対応点を検出する"""
-    detector = cv2.AKAZE_create()
-
-    key_point1, descript1 = detector.detectAndCompute(img1, None)
-    key_point2, descript2 = detector.detectAndCompute(img2, None)
-
-    bf_matcher = cv2.BFMatcher(cv2.NORM_HAMMING)
-
-    matches = bf_matcher.knnMatch(descript1, descript2, k=2)
-
-    ratio = 0.7
-    good_matches = []
-    for m, n in matches:
-        if m.distance < ratio * n.distance:
-            good_matches.append([m])
-
-    good_matches = sorted(good_matches, key=lambda x: x[0].distance)
-
-    # img3 = cv2.drawMatchesKnn(
-    #     img1,
-    #     key_point1,
-    #     img2,
-    #     key_point2,
-    #     good_matches,
-    #     None,
-    #     flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS,
-    # )
-
-    # cv2.imshow("image", img3)
-    # cv2.waitKey()
-
-    query_indices, train_indices = get_corresponding_indices(good_matches)
-
-    X1, X2 = get_keypoint_matrix(key_point1, query_indices, key_point2, train_indices)
-
-    return X1, X2
