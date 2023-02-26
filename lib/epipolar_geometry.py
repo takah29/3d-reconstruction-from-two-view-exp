@@ -165,4 +165,4 @@ def reconstruct_3d_points(X1, X2, P, P_prime, f0):
 
     X_ = -np.linalg.pinv(T) @ p
 
-    return X_
+    return X_[:, :, 0]
