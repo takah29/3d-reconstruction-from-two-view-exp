@@ -57,30 +57,30 @@ def detect_corresponding_points(img1, img2):
     return X1, X2
 
 
-def calc_fundamental_matrix_8points_method(X1, X2):
+def calc_fundamental_matrix_8points_method(x1, x2):
     """8点法で基礎行列Fを求める
 
     f = ravel(F) として Mf = 0 を解く
     データ数は8点以上あってもいい
     """
-    assert X1.ndim == 2 and X1.shape[1] == 2
-    assert X2.ndim == 2 and X2.shape[1] == 2
-    assert X1.shape == X2.shape
+    assert x1.ndim == 2 and x1.shape[1] == 2
+    assert x2.ndim == 2 and x2.shape[1] == 2
+    assert x1.shape == x2.shape
 
-    X1_ext = np.hstack((X1, np.ones((X1.shape[0], 1))))
-    X2_ext = np.hstack((X2, np.ones((X2.shape[0], 1))))
+    x1_ext = np.hstack((x1, np.ones((x1.shape[0], 1))))
+    x2_ext = np.hstack((x2, np.ones((x2.shape[0], 1))))
 
-    X1_ext = np.tile(X1_ext, 3)
-    X2_ext = np.repeat(X2_ext, 3, axis=1)
+    x1_ext = np.tile(x1_ext, 3)
+    x2_ext = np.repeat(x2_ext, 3, axis=1)
 
-    M = X1_ext * X2_ext
-    _, _, V = np.linalg.svd(M)
-    F = V[-1].reshape(3, 3)
+    M = x1_ext * x2_ext
+    _, _, Vt = np.linalg.svd(M)
+    F = Vt[-1].reshape(3, 3)
 
     # Rank(F) = 2 にする
-    U, S, V = np.linalg.svd(F)
+    U, S, Vt = np.linalg.svd(F)
     S[2] = 0.0
-    F = U @ np.diag(S) @ V
+    F = U @ np.diag(S) @ Vt
 
     return F
 
@@ -117,23 +117,23 @@ def calc_focal_length(F, f0):
     return f, f_prime
 
 
-def calc_motion_parameters(F, X1, X2, f, f_prime, f0):
+def calc_motion_parameters(F, x1, x2, f, f_prime, f0):
     f0_inv = 1 / f0
     E = np.diag((f0_inv, f0_inv, 1 / f)) @ F @ np.diag((f0_inv, f0_inv, 1 / f_prime))
     t = np.linalg.eig(E @ E.T)[1][:, -1]
 
-    X1_ext = np.hstack((X1 / f, np.ones((X1.shape[0], 1))))
-    X2_ext = np.hstack((X2 / f_prime, np.ones((X2.shape[0], 1))))
-    X2_ext_E = X2_ext @ E.T
+    x1_ext = np.hstack((x1 / f, np.ones((x1.shape[0], 1))))
+    x2_ext = np.hstack((x2 / f_prime, np.ones((x2.shape[0], 1))))
+    x2_ext_E = x2_ext @ E.T
 
     scalar_triple_product_sum = sum(
-        [np.linalg.det(np.vstack((t, x, y))) for x, y in zip(X1_ext, X2_ext_E)]
+        [np.linalg.det(np.vstack((t, x, y))) for x, y in zip(x1_ext, x2_ext_E)]
     )
     if scalar_triple_product_sum <= 0.0:
         t = -t
 
     K = -np.cross(t, E.T, axisc=0)
-    U, S, Vt = np.linalg.svd(K)
+    U, _, Vt = np.linalg.svd(K)
     R = U @ np.diag((1, 1, np.linalg.det(U @ Vt))) @ Vt
 
     return R, unit_vec(t)
@@ -146,7 +146,7 @@ def get_camera_matrix(f, f_prime, R, t, f0):
     return P, P_prime
 
 
-def reconstruct_3d_points(X1, X2, P, P_prime, f0):
+def reconstruct_3d_points(x1, x2, P, P_prime, f0):
     # (4, 4)
     K1 = f0 * np.vstack((P[:2], P_prime[:2]))
 
@@ -159,7 +159,7 @@ def reconstruct_3d_points(X1, X2, P, P_prime, f0):
     )
 
     # (n, 4, 4)
-    K3 = np.repeat(np.hstack((X1, X2))[:, :, np.newaxis], 4, axis=2)
+    K3 = np.repeat(np.hstack((x1, x2))[:, :, np.newaxis], 4, axis=2)
 
     K = K1 - K2 * K3
     T = K[:, :, :3]
