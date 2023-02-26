@@ -1,6 +1,8 @@
 import numpy as np
 import cv2
 
+from lib.utils import unit_vec
+
 
 def get_corresponding_indices(matches):
     query_indices = [x[0].queryIdx for x in matches]
@@ -89,8 +91,8 @@ def calc_focal_length(F, f0):
     FFt = F @ F.T
     FtF = F.T @ F
 
-    e = np.linalg.eig(FFt)[1][-1]
-    e_prime = np.linalg.eig(FtF)[1][-1]
+    e = np.linalg.eig(FFt)[1][:, -1]
+    e_prime = np.linalg.eig(FtF)[1][:, -1]
 
     k = np.array([[0.0], [0.0], [1.0]])
     Fk = F @ k
@@ -118,7 +120,7 @@ def calc_focal_length(F, f0):
 def calc_motion_parameters(F, X1, X2, f, f_prime, f0):
     f0_inv = 1 / f0
     E = np.diag((f0_inv, f0_inv, 1 / f)) @ F @ np.diag((f0_inv, f0_inv, 1 / f_prime))
-    t = np.linalg.eig(E @ E.T)[1][-1]
+    t = np.linalg.eig(E @ E.T)[1][:, -1]
 
     X1_ext = np.hstack((X1 / f, np.ones((X1.shape[0], 1))))
     X2_ext = np.hstack((X2 / f_prime, np.ones((X2.shape[0], 1))))
@@ -134,7 +136,7 @@ def calc_motion_parameters(F, X1, X2, f, f_prime, f0):
     U, S, Vt = np.linalg.svd(K)
     R = U @ np.diag((1, 1, np.linalg.det(U @ Vt))) @ Vt
 
-    return R, t
+    return R, unit_vec(t)
 
 
 def get_camera_matrix(f, f_prime, R, t, f0):
