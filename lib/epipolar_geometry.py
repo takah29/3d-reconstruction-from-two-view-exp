@@ -74,7 +74,7 @@ def calc_fundamental_matrix_8points_method(x1, x2):
     x2_ext = np.repeat(x2_ext, 3, axis=1)
 
     M = x1_ext * x2_ext
-    _, _, Vt = np.linalg.svd(M)
+    _, S, Vt = np.linalg.svd(M)
     F = Vt[-1].reshape(3, 3)
 
     # Rank(F) = 2 にする
@@ -83,6 +83,14 @@ def calc_fundamental_matrix_8points_method(x1, x2):
     F = U @ np.diag(S) @ Vt
 
     return F
+
+
+def calc_epipole(F):
+    U, _, Vt = np.linalg.svd(F)
+    e1 = U.T[-1]
+    e2 = Vt[-1]
+
+    return np.vstack((e1 / e1[2], e2 / e2[2]))[:, :2]
 
 
 def calc_focal_length(F, f0):
@@ -136,10 +144,10 @@ def calc_motion_parameters(F, x1, x2, f, f_prime, f0):
     U, _, Vt = np.linalg.svd(K)
     R = U @ np.diag((1, 1, np.linalg.det(U @ Vt))) @ Vt
 
-    return R, unit_vec(t)
+    return R, t
 
 
-def get_camera_matrix(f, f_prime, R, t, f0):
+def calc_camera_matrix(f, f_prime, R, t, f0):
     P = np.diag((f, f, f0)) @ np.block([np.eye(3), np.zeros((3, 1))])
     P_prime = np.diag((f_prime, f_prime, f0)) @ np.block([R.T, -R.T @ t[:, np.newaxis]])
 
