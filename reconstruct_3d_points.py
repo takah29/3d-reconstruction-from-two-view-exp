@@ -7,10 +7,10 @@ from lib.epipolar_geometry import (
     calc_fundamental_matrix_8points_method,
     calc_motion_parameters,
     detect_corresponding_points,
-    get_camera_matrix,
+    calc_camera_matrix,
     reconstruct_3d_points,
 )
-from lib.visualization import init_3d_ax, plot_basis, plot_points
+from lib.visualization import init_3d_ax, plot_3d_basis, plot_3d_points
 
 
 def main():
@@ -19,31 +19,31 @@ def main():
     img2 = cv2.imread("./images/003.jpg")
 
     # 対応点の検出
-    X1, X2 = detect_corresponding_points(img1, img2)
+    x1, x2 = detect_corresponding_points(img1, img2)
 
     # 基礎行列Fの計算
-    F = calc_fundamental_matrix_8points_method(X1, X2)
+    F = calc_fundamental_matrix_8points_method(x1, x2)
 
     # 焦点距離f, f_primeの計算
-    f0 = 100.0
+    f0 = 1.0
     f, f_prime = calc_focal_length(F, f0)
 
     # 運動パラメータの計算
-    R, t = calc_motion_parameters(F, X1, X2, f, f_prime, f0)
+    R, t = calc_motion_parameters(F, x1, x2, f, f_prime, f0)
 
     # 対応点の補正
     # X1_, X2_ = optimize_matches(X1, X2, F)
 
     # カメラ行列の取得
-    P, P_prime = get_camera_matrix(f, f_prime, R, t, f0)
+    P, P_prime = calc_camera_matrix(f, f_prime, R, t, f0)
 
     # 3次元復元
-    X_ = reconstruct_3d_points(X1, X2, P, P_prime, f0)
+    X_ = reconstruct_3d_points(x1, x2, P, P_prime, f0)
 
     ax = init_3d_ax()
-    plot_basis(np.zeros(3), np.eye(3), ax)
-    plot_basis(t, R, ax)
-    plot_points(X_, ax, "blue")
+    plot_3d_basis(np.zeros(3), np.eye(3), ax)
+    plot_3d_basis(t, R, ax)
+    plot_3d_points(X_, ax, "blue")
 
     plt.show()
 
