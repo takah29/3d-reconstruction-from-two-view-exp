@@ -79,7 +79,7 @@ def main():
     f = 1.0
     f0 = 1.0
     camera1 = Camera([0, 0, 0], [0, 0, 3], f)
-    camera2 = Camera([2, 2, 1.1], [0, 0, 3], f)
+    camera2 = Camera([2, 2, 1.1], [1, 0, 3], f)
 
     # データ点の設定
     X = set_points()
@@ -87,13 +87,15 @@ def main():
     # 2次元画像平面へ射影
     x1 = camera1.project_points(X, 1.0)
     x2 = camera2.project_points(X, 1.0)
+    #x1 += 0.01 * np.random.rand(*x1.shape)
+    #x2 += 0.01 * np.random.rand(*x2.shape)
 
     R1, t1 = camera1.get_pose()
     R2, t2 = camera2.get_pose()
 
     # 基礎行列の計算
     F = calc_fundamental_matrix_8points_method(x1, x2)
-    #F = np.cross(t2, R2.T).T
+    # F = np.cross(t2, R2.T)
     print(f"F={F}")
 
     # エピポールの計算
@@ -102,12 +104,14 @@ def main():
 
     # 焦点距離f, f_primeの計算
     f, f_prime = calc_focal_length(F, f0)
-    #f, f_prime = 1.0, 1.0
+    f, f_prime = 1.0, 1.0
     print(f"f={f}, f_prime={f_prime}")
 
     # 運動パラメータの計算
     R, t = calc_motion_parameters(F, x1, x2, f, f_prime, f0)
-    # R, t = R2, t2
+    print("R1", R)
+    #R, t = R2, t2
+    print("R2", R)
     print(f"R={R}, t={t}")
 
     # 対応点の補正
@@ -137,7 +141,7 @@ def main():
     plt.grid()
     plot_2d_points(x1, ax, color="black")
     # エピポールのプロット
-    plot_2d_points(epipole[:1], ax, color="green")
+    plot_2d_points(epipole[:-1], ax, color="green")
 
     # camera2で射影した2次元データ点のプロット
     ax = plt.subplot(1, 2, 2)
@@ -146,7 +150,7 @@ def main():
     plt.grid()
     plot_2d_points(x2, ax, color="black")
     # エピポールのプロット
-    plot_2d_points(epipole[-1:], ax, color="green")
+    plot_2d_points(epipole[:1], ax, color="green")
 
     plt.show()
 
@@ -154,6 +158,9 @@ def main():
     # print(X_)
     ax = init_3d_ax()
     plot_3d_points(X_, ax)
+    plot_3d_basis(t, R.T, ax)
+    #plot_3d_basis(t2, R2, ax)
+    #plot_3d_basis(t1, R1, ax)
     plt.show()
 
 
