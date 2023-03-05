@@ -77,12 +77,17 @@ def calc_fundamental_matrix_8points_method(x1, x2):
     _, S, Vt = np.linalg.svd(M)
     F = Vt[-1].reshape(3, 3)
 
+    # M_ = M.T @ M
+    # S, P = np.linalg.eig(M_)
+    # idx = np.argmin(S)
+    # F = P[:,idx].reshape(3, 3)
+
     # Rank(F) = 2 にする
     U, S, Vt = np.linalg.svd(F)
     S[2] = 0.0
-    F = U @ np.diag(S) @ Vt
+    F_ = U @ np.diag(S) @ Vt
 
-    return F
+    return F_
 
 
 def calc_epipole(F):
@@ -99,8 +104,14 @@ def calc_focal_length(F, f0):
     FFt = F @ F.T
     FtF = F.T @ F
 
-    e = np.linalg.eig(FFt)[1][:, -1]
-    e_prime = np.linalg.eig(FtF)[1][:, -1]
+    S, P = np.linalg.eig(FFt)
+    idx = np.argmin(S)
+    print(S, idx)
+    e = P[:, idx]
+    S, P = np.linalg.eig(FtF)
+    idx = np.argmin(S)
+    print(S, idx)
+    e_prime = P[:, idx]
 
     k = np.array([[0.0], [0.0], [1.0]])
     Fk = F @ k
@@ -111,6 +122,8 @@ def calc_focal_length(F, f0):
     e_prime_cross_k_norm2 = np.linalg.norm(np.cross(e_prime, k.T)) ** 2
     k_dot_Fk = k.T @ Fk
     k_dot_FFtFk = k.T @ (FFt @ Fk)
+
+    print(Fk_norm2, Ftk_norm2, k_dot_Fk)
 
     xi = (Fk_norm2 - (k_dot_FFtFk * e_prime_cross_k_norm2 / k_dot_Fk)) / (
         e_prime_cross_k_norm2 * Ftk_norm2 - k_dot_Fk**2
@@ -128,8 +141,10 @@ def calc_focal_length(F, f0):
 def calc_motion_parameters(F, x1, x2, f, f_prime, f0):
     f0_inv = 1 / f0
     E = np.diag((f0_inv, f0_inv, 1 / f)) @ F @ np.diag((f0_inv, f0_inv, 1 / f_prime))
-    t = np.linalg.eig(E @ E.T)[1][:, -1]
-
+    S, P = np.linalg.eig(E @ E.T)
+    idx = np.argmin(S)
+    t = P[:, idx]
+    print("P", S,P)
     x1_ext = np.hstack((x1 / f, np.ones((x1.shape[0], 1))))
     x2_ext = np.hstack((x2 / f_prime, np.ones((x2.shape[0], 1))))
     x2_ext_E = x2_ext @ E.T
@@ -143,7 +158,6 @@ def calc_motion_parameters(F, x1, x2, f, f_prime, f0):
     K = -np.cross(t, E.T, axisc=0)
     U, _, Vt = np.linalg.svd(K)
     R = U @ np.diag((1, 1, np.linalg.det(U @ Vt))) @ Vt
-
     return R, t
 
 
