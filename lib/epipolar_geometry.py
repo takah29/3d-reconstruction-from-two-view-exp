@@ -60,6 +60,7 @@ def detect_corresponding_points(img1, img2):
 def calc_fundamental_matrix_8points_method(x1, x2):
     """8点法で基礎行列Fを求める
 
+    (x1_ext, Fx2_ext) = 0 となるFを求める
     f = ravel(F) として Mf = 0 を解く
     データ数は8点以上あってもいい
     """
@@ -70,20 +71,17 @@ def calc_fundamental_matrix_8points_method(x1, x2):
     x1_ext = np.hstack((x1, np.ones((x1.shape[0], 1))))
     x2_ext = np.hstack((x2, np.ones((x2.shape[0], 1))))
 
-    x1_ext = np.tile(x1_ext, 3)
-    x2_ext = np.repeat(x2_ext, 3, axis=1)
+    x1_ext = np.repeat(x1_ext, 3, axis=1)
+    x2_ext = np.tile(x2_ext, 3)
 
     M = x1_ext * x2_ext
     _, S, Vt = np.linalg.svd(M)
     F = Vt[-1].reshape(3, 3)
 
-    # M_ = M.T @ M
-    # S, P = np.linalg.eig(M_)
-    # idx = np.argmin(S)
-    # F = P[:,idx].reshape(3, 3)
-
-    # Rank(F) = 2 にする
+    # Rank(F) = 2, norm(F) = 1 にする
     U, S, Vt = np.linalg.svd(F)
+    s12_norm = np.linalg.norm(S[:2])
+    S[:2] /= s12_norm
     S[2] = 0.0
     F_ = U @ np.diag(S) @ Vt
 
