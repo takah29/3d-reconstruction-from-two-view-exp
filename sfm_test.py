@@ -76,10 +76,10 @@ def set_points_box():
 
 
 def main():
-    f_ = 2.0
+    f_ = 1.5
     f_prime_ = 1.0
     f0 = 1.0
-    camera1 = Camera([0, 0, 0], [0, 0, 3], f_)
+    camera1 = Camera([0, 1, 0], [0, 1, 3], f_)
     camera2 = Camera([2, 2, 1.1], [1, 0, 3], f_prime_)
 
     # データ点の設定
@@ -88,15 +88,15 @@ def main():
     # 2次元画像平面へ射影
     x1 = camera1.project_points(X, f0)
     x2 = camera2.project_points(X, f0)
-    # x1 += 0.01 * np.random.rand(*x1.shape)
-    # x2 += 0.01 * np.random.rand(*x2.shape)
+    #x1 += 0.01 * np.random.rand(*x1.shape)
+    #x2 += 0.01 * np.random.rand(*x2.shape)
 
     R1, t1 = camera1.get_pose()
     R2, t2 = camera2.get_pose()
 
     # 基礎行列の計算
-    F = calc_fundamental_matrix_8points_method(x1, x2)
-    F = np.cross(t2, R2.T).T
+    F = calc_fundamental_matrix_8points_method(x1, x2, normalize=False)
+    # F = np.cross(t2, R2.T).T
     # print(f"F={F/F1}")
 
     # エピポールの計算
