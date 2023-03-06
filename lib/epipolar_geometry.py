@@ -58,12 +58,28 @@ def detect_corresponding_points(img1, img2):
 
 
 def calc_normalize_mat(x):
+    """データ点を原点中心に移動して、平均ノルムがsqrt(2)となる正規化行列を求める"""
     m = x.mean(axis=0)
     s = np.sqrt(2) / np.linalg.norm(x - m, axis=1).mean()
     S = np.array([[s, 0], [0, s]])
     W = np.block([[S, -s * m[:, np.newaxis]], [np.zeros(2), 1]])
 
     return W
+
+
+def correct_rank(F):
+    """基礎行列Fのランクを補正する
+
+    rank(F) = 2, norm(F) = 1 にする
+    """
+
+    U, S, Vt = np.linalg.svd(F)
+    s12_norm = np.linalg.norm(S[:2])
+    S[:2] /= s12_norm
+    S[2] = 0.0
+    F_ = U @ np.diag(S) @ Vt
+
+    return F_
 
 
 def calc_fundamental_matrix_8points_method(x1, x2, normalize=True):
