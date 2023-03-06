@@ -110,12 +110,8 @@ def calc_fundamental_matrix_8points_method(x1, x2, normalize=True):
     _, S, Vt = np.linalg.svd(M)
     F = Vt[-1].reshape(3, 3)
 
-    # Rank(F) = 2, norm(F) = 1 にする
-    U, S, Vt = np.linalg.svd(F)
-    s12_norm = np.linalg.norm(S[:2])
-    S[:2] /= s12_norm
-    S[2] = 0.0
-    F_ = U @ np.diag(S) @ Vt
+    # rank(F) = 2に補正する
+    F_ = correct_rank(F)
 
     if normalize:
         F_ = W1.T @ F_ @ W2
