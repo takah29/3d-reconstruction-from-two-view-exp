@@ -43,7 +43,7 @@ class Camera:
 
     def project_points(self, X, f0):
         X_ext = np.hstack((X, np.ones((X.shape[0], 1))))
-        print(self.get_camera_matrix(f0))
+        # print(self.get_camera_matrix(f0))
         Xproj = X_ext @ self.get_camera_matrix(f0).T
         return Xproj[:, :2] / Xproj[:, -1:]
 
@@ -88,16 +88,16 @@ def main():
     # 2次元画像平面へ射影
     x1 = camera1.project_points(X, f0)
     x2 = camera2.project_points(X, f0)
-    #x1 += 0.01 * np.random.rand(*x1.shape)
-    #x2 += 0.01 * np.random.rand(*x2.shape)
+    x1 += 0.02 * np.random.rand(*x1.shape)
+    x2 += 0.02 * np.random.rand(*x2.shape)
 
     R1, t1 = camera1.get_pose()
     R2, t2 = camera2.get_pose()
 
     # 基礎行列の計算
-    F = calc_fundamental_matrix_8points_method(x1, x2, normalize=False)
+    F = calc_fundamental_matrix_8points_method(x1, x2, normalize=True)
     # F = np.cross(t2, R2.T).T
-    # print(f"F={F/F1}")
+    print(f"F={F}")
 
     # エピポールの計算
     epipole = calc_epipole(F)
@@ -134,22 +134,22 @@ def main():
 
     # 2次元に射影したデータ点の表示
     # camera1で射影した2次元データ点のプロット
-    ax = plt.subplot(1, 2, 1)
-    ax.set_xlim(-2, 2)
-    ax.set_ylim(-2, 2)
+    ax1 = plt.subplot(1, 2, 1)
+    ax1.set_xlim(-2, 2)
+    ax1.set_ylim(-2, 2)
     plt.grid()
-    plot_2d_points(x1, ax, color="black")
+    plot_2d_points(x1, ax1, color="black")
     # エピポールのプロット
-    plot_2d_points(epipole[:1], ax, color="green")
+    plot_2d_points(epipole[:1], ax1, color="green")
 
     # camera2で射影した2次元データ点のプロット
-    ax = plt.subplot(1, 2, 2)
-    ax.set_xlim(-2, 2)
-    ax.set_ylim(-2, 2)
+    ax2 = plt.subplot(1, 2, 2)
+    ax2.set_xlim(-2, 2)
+    ax2.set_ylim(-2, 2)
     plt.grid()
-    plot_2d_points(x2, ax, color="black")
+    plot_2d_points(x2, ax2, color="black")
     # エピポールのプロット
-    plot_2d_points(epipole[-1:], ax, color="green")
+    plot_2d_points(epipole[-1:], ax2, color="green")
 
     plt.show()
 
