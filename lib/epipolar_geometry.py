@@ -103,13 +103,9 @@ def calc_focal_length(F, f0):
     FtF = F.T @ F
 
     S, P = np.linalg.eig(FFt)
-    idx = np.argmin(S)
-    print(S, idx)
-    e = P[:, idx]
+    e = P[:, np.argmin(S)]
     S, P = np.linalg.eig(FtF)
-    idx = np.argmin(S)
-    print(S, idx)
-    e_prime = P[:, idx]
+    e_prime = P[:, np.argmin(S)]
 
     k = np.array([[0.0], [0.0], [1.0]])
     Fk = F @ k
@@ -120,8 +116,6 @@ def calc_focal_length(F, f0):
     e_prime_cross_k_norm2 = np.linalg.norm(np.cross(e_prime, k.T)) ** 2
     k_dot_Fk = k.T @ Fk
     k_dot_FFtFk = k.T @ (FFt @ Fk)
-
-    print(Fk_norm2, Ftk_norm2, k_dot_Fk)
 
     xi = (Fk_norm2 - (k_dot_FFtFk * e_prime_cross_k_norm2 / k_dot_Fk)) / (
         e_prime_cross_k_norm2 * Ftk_norm2 - k_dot_Fk**2
@@ -140,9 +134,8 @@ def calc_motion_parameters(F, x1, x2, f, f_prime, f0):
     f0_inv = 1 / f0
     E = np.diag((f0_inv, f0_inv, 1 / f)) @ F @ np.diag((f0_inv, f0_inv, 1 / f_prime))
     S, P = np.linalg.eig(E @ E.T)
-    idx = np.argmin(S)
-    t = P[:, idx]
-    print("P", S,P)
+    t = P[:, np.argmin(S)]
+
     x1_ext = np.hstack((x1 / f, np.ones((x1.shape[0], 1))))
     x2_ext = np.hstack((x2 / f_prime, np.ones((x2.shape[0], 1))))
     x2_ext_E = x2_ext @ E.T
