@@ -75,6 +75,10 @@ def set_points_box():
     return points + np.array([0, 3, 0])
 
 
+def calc_true_F(R, t, f, f_prime, f0):
+    return np.diag((f0, f0, f)) @ np.cross(t, R.T).T @ np.diag((f0, f0, f_prime))
+
+
 def main():
     f_ = 1.5
     f_prime_ = 1.0
@@ -96,7 +100,7 @@ def main():
 
     # 基礎行列の計算
     F = calc_fundamental_matrix_8points_method(x1, x2, normalize=True)
-    # F = np.cross(t2, R2.T).T
+    # F = calc_true_F(R2, t2, f_, f_prime_, f0)
     print(f"F={F}")
 
     # エピポールの計算
