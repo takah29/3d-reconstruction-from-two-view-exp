@@ -57,7 +57,7 @@ def detect_corresponding_points(img1, img2):
     return X1, X2
 
 
-def calc_fundamental_matrix_8points_method(x1, x2):
+def calc_fundamental_matrix_8points_method(x1, x2, normalize=True):
     """8点法で基礎行列Fを求める
 
     (x1_ext, Fx2_ext) = 0 となるFを求める
@@ -67,6 +67,44 @@ def calc_fundamental_matrix_8points_method(x1, x2):
     assert x1.ndim == 2 and x1.shape[1] == 2
     assert x2.ndim == 2 and x2.shape[1] == 2
     assert x1.shape == x2.shape
+
+    if normalize:
+        # x1の正規化
+        m1 = x1.mean(axis=0)
+        x1 = x1 - m1
+        s1 = np.sqrt(2) / np.linalg.norm(x1, axis=1).mean()
+        x1 = s1 * x1
+
+        # x2の正規化
+        m2 = x2.mean(axis=0)
+        x2 = x2 - m2
+        s2 = np.sqrt(2) / np.linalg.norm(x2, axis=1).mean()
+        x2 = s2 * x2
+
+        # 逆変換用行列
+        S1 = np.array([[s1, 0], [0, s1]])
+        W1 = np.block([[S1, m1[:, np.newaxis]], [np.zeros(2), 1]])
+        S2 = np.array([[s2, 0], [0, s2]])
+        W2 = np.block([[S2, m2[:, np.newaxis]], [np.zeros(2), 1]])
+
+        # # 2次元に射影したデータ点の表示
+        import matplotlib.pyplot as plt
+        from lib.visualization import plot_2d_points
+        # camera1で射影した2次元データ点のプロット
+        ax = plt.subplot(1, 2, 1)
+        ax.set_xlim(-2, 2)
+        ax.set_ylim(-2, 2)
+        plt.grid()
+        plot_2d_points(x1, ax, color="black")
+
+        # camera2で射影した2次元データ点のプロット
+        ax = plt.subplot(1, 2, 2)
+        ax.set_xlim(-2, 2)
+        ax.set_ylim(-2, 2)
+        plt.grid()
+        plot_2d_points(x2, ax, color="black")
+
+        plt.show()
 
     x1_ext = np.hstack((x1, np.ones((x1.shape[0], 1))))
     x2_ext = np.hstack((x2, np.ones((x2.shape[0], 1))))
@@ -84,6 +122,9 @@ def calc_fundamental_matrix_8points_method(x1, x2):
     S[:2] /= s12_norm
     S[2] = 0.0
     F_ = U @ np.diag(S) @ Vt
+
+    if normalize:
+        F_ = W1.T @ F_ @ W2
 
     return F_
 
