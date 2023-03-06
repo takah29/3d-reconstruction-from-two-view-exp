@@ -19,14 +19,12 @@ def init_3d_ax():
     return ax
 
 
-
 def plot_3d_basis(pos: NDArray, basis: NDArray, ax, label=None) -> None:
     """
     基底をプロットする。回転行列のプロットにも使用できる。
     """
     assert pos.shape == (3,)
     assert basis.shape == (3, 3)
-
 
     cols = ["r", "g", "b", "r", "r", "g", "g", "b", "b"]
     _ = ax.quiver(
@@ -38,11 +36,12 @@ def plot_3d_basis(pos: NDArray, basis: NDArray, ax, label=None) -> None:
 
 
 def plot_3d_points(X: NDArray, ax, color="black") -> None:
-    ax.scatter(X[:, 1], X[:, 2], X[:, 0], c=color, marker="o")
+    ax.scatter(X[:, 1], X[:, 2], X[:, 0], c=color, marker=".")
 
 
 def plot_2d_points(x, ax, color="black") -> None:
-    ax.scatter(x[:, 1], x[:, 0], c=color, marker="o")
+    ax.scatter(x[:, 1], x[:, 0], c=color, marker=".")
+
 
 if __name__ == "__main__":
     import numpy as np
@@ -55,7 +54,7 @@ if __name__ == "__main__":
     basis = np.array(
         [[1, 0, 0], [0, np.cos(omega), -np.sin(omega)], [0, np.sin(omega), np.cos(omega)]]
     ).T  # 横ベクトル向けに転置する
-    plot_3dbasis(pos, basis, ax, label="test")
+    plot_3d_basis(pos, basis, ax, label="test")
 
     # データ点のプロット
     X = np.eye(3) @ basis + pos
