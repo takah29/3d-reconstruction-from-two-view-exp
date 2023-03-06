@@ -57,6 +57,15 @@ def detect_corresponding_points(img1, img2):
     return X1, X2
 
 
+def calc_normalize_mat(x):
+    m = x.mean(axis=0)
+    s = np.sqrt(2) / np.linalg.norm(x - m, axis=1).mean()
+    S = np.array([[s, 0], [0, s]])
+    W = np.block([[S, -s * m[:, np.newaxis]], [np.zeros(2), 1]])
+
+    return W
+
+
 def calc_fundamental_matrix_8points_method(x1, x2, normalize=True):
     """8点法で基礎行列Fを求める
 
