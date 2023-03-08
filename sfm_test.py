@@ -99,7 +99,7 @@ def main():
     R2, t2 = camera2.get_pose()
 
     # 基礎行列の計算
-    F = calc_fundamental_matrix_8points_method(x1, x2, normalize=True)
+    F = calc_fundamental_matrix_8points_method(x1, x2, f0, normalize=True)
     # F = calc_true_F(R2, t2, f_, f_prime_, f0)
     print(f"F={F}")
 

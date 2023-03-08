@@ -86,7 +86,7 @@ def correct_rank_to_optimal(F):
     pass
 
 
-def calc_fundamental_matrix_8points_method(x1, x2, normalize=True):
+def calc_fundamental_matrix_8points_method(x1, x2, f0, normalize=True):
     """8点法で基礎行列Fを求める
 
     (x1_ext, Fx2_ext) = 0 となるFを求める
@@ -97,8 +97,8 @@ def calc_fundamental_matrix_8points_method(x1, x2, normalize=True):
     assert x2.ndim == 2 and x2.shape[1] == 2
     assert x1.shape == x2.shape
 
-    x1_ext = np.hstack((x1, np.ones((x1.shape[0], 1))))
-    x2_ext = np.hstack((x2, np.ones((x2.shape[0], 1))))
+    x1_ext = np.hstack((x1 / f0, np.ones((x1.shape[0], 1))))
+    x2_ext = np.hstack((x2 / f0, np.ones((x2.shape[0], 1))))
 
     if normalize:
         W1 = calc_normalize_mat(x1)
