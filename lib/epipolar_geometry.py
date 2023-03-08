@@ -29,7 +29,7 @@ def detect_corresponding_points(img1, img2):
 
     matches = bf_matcher.knnMatch(descript1, descript2, k=2)
 
-    ratio = 0.7
+    ratio = 0.5
     good_matches = []
     for m, n in matches:
         if m.distance < ratio * n.distance:
@@ -37,18 +37,18 @@ def detect_corresponding_points(img1, img2):
 
     good_matches = sorted(good_matches, key=lambda x: x[0].distance)
 
-    # img3 = cv2.drawMatchesKnn(
-    #     img1,
-    #     key_point1,
-    #     img2,
-    #     key_point2,
-    #     good_matches,
-    #     None,
-    #     flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS,
-    # )
+    img3 = cv2.drawMatchesKnn(
+        img1,
+        key_point1,
+        img2,
+        key_point2,
+        good_matches,
+        None,
+        flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS,
+    )
 
-    # cv2.imshow("image", img3)
-    # cv2.waitKey()
+    cv2.imshow("image", img3)
+    cv2.waitKey()
 
     query_indices, train_indices = get_corresponding_indices(good_matches)
 
@@ -80,6 +80,10 @@ def correct_rank(F):
     F_ = U @ np.diag(S) @ Vt
 
     return F_
+
+
+def correct_rank_to_optimal(F):
+    pass
 
 
 def calc_fundamental_matrix_8points_method(x1, x2, normalize=True):
