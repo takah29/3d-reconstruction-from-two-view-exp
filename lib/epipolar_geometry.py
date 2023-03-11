@@ -2,6 +2,10 @@ import numpy as np
 import cv2
 
 
+def convert_image_coord_to_screen_coord(points):
+    return np.hstack((-points[:, -1:], points[:, :1]))
+
+
 def get_corresponding_indices(matches):
     query_indices = [x[0].queryIdx for x in matches]
     train_indices = [x[0].trainIdx for x in matches]
