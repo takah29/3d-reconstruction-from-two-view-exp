@@ -1,5 +1,6 @@
 import numpy as np
 
+from scipy.linalg import eig
 from .utils import unit_vec
 
 
@@ -210,6 +211,22 @@ def calc_fundamental_matrix_8points_method(x1, x2, f0, normalize=True, optimal=T
         F_ = W1.T @ F_ @ W2
 
     return F_
+
+
+def calc_fundamental_matrix_taubin_method(x1, x2, f0):
+    xi = _calc_xi(x1, x2, f0)
+
+    # (n, 9, 1) @ (n, 1, 9) -> (n, 9, 9) -> (9, 9)
+    M = (xi[..., np.newaxis] @ xi[:, np.newaxis, :]).mean(axis=0)
+    # (n, 9, 9) -> (9, 9)
+    N = _calc_V0_xi(x1, x2, f0).mean(axis=0)
+
+    # S, U = eig(M, N)
+    print(N)
+    S, U = eig(M, N)
+    F = U[:, np.argmin(S)].reshape(3, 3)
+
+    return F
 
 
 def remove_outliers(x1, x2, f0, d):
