@@ -67,7 +67,7 @@ def calc_epipole(F):
     return np.vstack((e1 / e1[2], e2 / e2[2]))[:, :2]
 
 
-def calc_focal_length(F, f0):
+def calc_focal_length(F, f0, verbose=False):
     """基礎行列Fから焦点距離f,f_primeを計算する"""
     # 最小固有値に対する固有ベクトルを取得する
     FFt = F @ F.T
@@ -79,14 +79,18 @@ def calc_focal_length(F, f0):
     e_prime = P[:, np.argmin(S)]
 
     k = np.array([[0.0], [0.0], [1.0]])
+
     Fk = F @ k
     Ftk = F.T @ k
+
     Fk_norm2 = np.linalg.norm(Fk) ** 2
     Ftk_norm2 = np.linalg.norm(Ftk) ** 2
+
     e_cross_k_norm2 = np.linalg.norm(np.cross(e, k.T)) ** 2
     e_prime_cross_k_norm2 = np.linalg.norm(np.cross(e_prime, k.T)) ** 2
-    k_dot_Fk = k.T @ Fk
-    k_dot_FFtFk = k.T @ (FFt @ Fk)
+
+    k_dot_Fk = (k.T @ Fk)[0][0]
+    k_dot_FFtFk = (k.T @ (FFt @ Fk))[0][0]
 
     xi = (Fk_norm2 - (k_dot_FFtFk * e_prime_cross_k_norm2 / k_dot_Fk)) / (
         e_prime_cross_k_norm2 * Ftk_norm2 - k_dot_Fk**2
@@ -95,8 +99,11 @@ def calc_focal_length(F, f0):
         e_cross_k_norm2 * Fk_norm2 - k_dot_Fk**2
     )
 
-    f = f0 / np.sqrt(1 + xi[0][0])
-    f_prime = f0 / np.sqrt(1 + ita[0][0])
+    if verbose:
+        print(f"|Fk|^2={Fk_norm2}, |Ftk|^2={Ftk_norm2}, <k, Fk>={k_dot_Fk}, xi={xi}, ita={ita}")
+
+    f = f0 / np.sqrt(1 + xi)
+    f_prime = f0 / np.sqrt(1 + ita)
 
     return f, f_prime
 
