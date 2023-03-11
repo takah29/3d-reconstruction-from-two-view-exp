@@ -81,7 +81,6 @@ def calc_true_F(R, t, f, f_prime, f0):
 def main():
     f_ = 1.5
     f_prime_ = 1.0
-    f0 = 1.0
     camera1 = Camera([0, 1, 0], [0, 1, 3], f_)
     camera2 = Camera([2, 2, 1.1], [1, 0, 3], f_prime_)
 
@@ -89,30 +88,31 @@ def main():
     X = set_points()
 
     # 2次元画像平面へ射影
-    x1 = camera1.project_points(X, f0)
-    x2 = camera2.project_points(X, f0)
-    x1 += 0.01 * np.random.rand(*x1.shape)
-    x2 += 0.01 * np.random.rand(*x2.shape)
+    x1 = camera1.project_points(X, 1.0)
+    x2 = camera2.project_points(X, 1.0)
+    x1 += 0.05 * np.random.rand(*x1.shape)
+    x2 += 0.05 * np.random.rand(*x2.shape)
 
     R1, t1 = camera1.get_pose()
     R2, t2 = camera2.get_pose()
 
     # 基礎行列の計算
+    f0 = 1.0
     F = calc_fundamental_matrix_8points_method(x1, x2, f0, normalize=True, optimal=True)
-    # F = calc_true_F(R2, t2, f_, f_prime_, f0)
-    print(f"F={F}")
+    F_ = calc_true_F(R2, t2, f_, f_prime_, f0)
+    print(f"|F_ - F|={np.linalg.norm(F_ - F)}")
 
     # エピポールの計算
-    epipole = calc_epipole(F)
+    epipole = calc_epipole(F_)
     print(f"e1={epipole[0]}, e2={epipole[1]}")
 
     # 焦点距離f, f_primeの計算
-    f, f_prime = calc_focal_length(F, f0)
+    f, f_prime = calc_focal_length(F_, f0)
     # f, f_prime = f_, f_prime_
     print(f"f={f}, f_prime={f_prime}")
 
     # 運動パラメータの計算
-    R, t = calc_motion_parameters(F, x1, x2, f, f_prime, f0)
+    R, t = calc_motion_parameters(F_, x1, x2, f, f_prime, f0)
     # R, t = R2, t2
     print(f"R={R}, t={t}")
 
