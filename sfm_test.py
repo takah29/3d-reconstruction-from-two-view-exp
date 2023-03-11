@@ -1,7 +1,11 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from lib.fundamental_matrix import calc_fundamental_matrix_8points_method, remove_outliers
+from lib.fundamental_matrix import (
+    calc_fundamental_matrix_8points_method,
+    calc_fundamental_matrix_taubin_method,
+    remove_outliers,
+)
 from lib.epipolar_geometry import (
     calc_focal_length,
     calc_motion_parameters,
@@ -94,12 +98,10 @@ def main():
     # ノイズの追加
     x1 += 0.01 * np.random.randn(*x1.shape)
     x2 += 0.01 * np.random.randn(*x2.shape)
-    # x1 += 0.03 * np.random.rand(*x1.shape)
-    # x2 += 0.03 * np.random.rand(*x2.shape)
 
     # アウトライアの追加
-    x1 = np.vstack((x1, 0.5 * np.random.randn(20, 2)))
-    x2 = np.vstack((x2, 0.5 * np.random.randn(20, 2)))
+    #x1 = np.vstack((x1, 0.5 * np.random.randn(20, 2)))
+    #x2 = np.vstack((x2, 0.5 * np.random.randn(20, 2)))
 
     R1, t1 = camera1.get_pose()
     R2, t2 = camera2.get_pose()
@@ -111,21 +113,22 @@ def main():
     print(f"number of outlier: {outliers.sum()}")
 
     # 基礎行列の計算
-    F = calc_fundamental_matrix_8points_method(x1, x2, f0, normalize=True, optimal=True)
+    # F = calc_fundamental_matrix_8points_method(x1, x2, f0, normalize=True, optimal=True)
+    F = calc_fundamental_matrix_taubin_method(x1, x2, f0)
     F_ = calc_true_F(R2, t2, f_, f_prime_, f0)
     print(f"|F_ - F|={np.linalg.norm(F_ - F)}")
 
     # エピポールの計算
-    epipole = calc_epipole(F_)
+    epipole = calc_epipole(F)
     print(f"e1={epipole[0]}, e2={epipole[1]}")
 
     # 焦点距離f, f_primeの計算
-    f, f_prime = calc_focal_length(F_, f0)
+    f, f_prime = calc_focal_length(F, f0)
     # f, f_prime = f_, f_prime_
     print(f"f={f}, f_prime={f_prime}")
 
     # 運動パラメータの計算
-    R, t = calc_motion_parameters(F_, x1, x2, f, f_prime, f0)
+    R, t = calc_motion_parameters(F, x1, x2, f, f_prime, f0)
     # R, t = R2, t2
     print(f"R={R}, t={t}")
 
