@@ -210,3 +210,42 @@ def calc_fundamental_matrix_8points_method(x1, x2, f0, normalize=True, optimal=T
         F_ = W1.T @ F_ @ W2
 
     return F_
+
+
+def remove_outliers(x1, x2, f0, d):
+    """RANSACによるアウトライア除去を行う"""
+    max_n = 0
+    count = 0
+
+    while True:
+        xi = calc_xi(x1, x2, f0)
+        rnd_ind = np.random.choice(np.arange(x1.shape[0]), 8, replace=False)
+        sub_xi = xi[rnd_ind]
+
+        # (8, 9, 1) @ (8, 1, 9) -> (8, 9, 9) -> (9, 9)
+        M = (sub_xi[..., np.newaxis] @ sub_xi[:, np.newaxis, :]).sum(axis=0)
+
+        S, U = np.linalg.eig(M)
+        theta_ = U[:, np.argmin(S)]
+
+        # (n, 9) @ (9, 1) -> (n, 1) -> (n, )
+        num = (xi @ theta_[:, np.newaxis]).squeeze(1) ** 2
+
+        # (n, 9, 9) @ (9, 1) -> (n, 9, 1) -> (n, 9) -> (9, n)
+        V0_xi_theta_t = (calc_V0_xi(x1, x2, f0) @ theta_[:, np.newaxis]).squeeze(2).T
+        # (9, ) @ (9, n) -> (n, )
+        denom = theta_ @ V0_xi_theta_t
+
+        satisfied = (num / denom) < 2 * d**2
+        n = satisfied.sum()
+
+        if n > max_n:
+            max_n = n
+            max_satisfied = satisfied
+            count = 0
+        else:
+            count += 1
+            if count >= 20:
+                break
+
+    return x1[max_satisfied], x2[max_satisfied], ~max_satisfied
