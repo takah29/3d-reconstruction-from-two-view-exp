@@ -3,23 +3,65 @@ import numpy as np
 from .utils import unit_vec
 
 
-def calc_xi_array(x1, x2, f0):
+def calc_xi(x1, x2, f0):
     """
     x, x' = x1, x2, (x)i1 = xi, (x)i2 = yiとしたとき、以下のデータを返す
-    xi_array = [
+    xi = [
         [x1*x'1, x1*y'1, f0*x1, y1*x'1, y1*y'1, f0*y1, f0*x'1, f0*y'1, f0**2]
         [x2*x'2, x2*y'2, f0*x2, y2*x'2, y2*y'2, f0*y2, f0*x'2, f0*y'2, f0**2]
         ...
         [xn*x'n, xn*y'n, f0*xn, yn*x'n, yn*y'n, f0*yn, f0*x'n, f0*y'n, f0**2]
     ]
+    xi.shape = (n, 9)
     """
     x1_ext = np.hstack((x1, f0 * np.ones((x1.shape[0], 1))))
     x2_ext = np.hstack((x2, f0 * np.ones((x2.shape[0], 1))))
     x1_ext = np.repeat(x1_ext, 3, axis=1)
     x2_ext = np.tile(x2_ext, 3)
-    xi_array = x1_ext * x2_ext
+    xi = x1_ext * x2_ext
 
-    return xi_array
+    return xi
+
+
+def calc_V0_xi(x1, x2, f0):
+    """各データの正規化共分散行列を求める
+
+    V0_xi.shape = (n, 9, 9)
+    """
+    V0_xi = np.zeros((9, 9, x1.shape[0]))
+
+    x1_0 = x1[:, 0]  # x
+    x1_1 = x1[:, 1]  # y
+    x2_0 = x2[:, 0]  # x'
+    x2_1 = x2[:, 1]  # y'
+
+    a = x1_0**2 + x2_0**2
+    b = x1_0**2 + x2_1**2
+    c = x1_1**2 + x2_0**2
+    d = x1_1**2 + x2_1**2
+    e = x1_0 * x1_1
+    f = x2_0 * x2_1
+    g = f0 * x1_0
+    h = f0 * x1_1
+    i = f0 * x2_0
+    j = f0 * x2_1
+    k = f0**2
+
+    V0_xi[0, 0] = a
+    V0_xi[1, 1] = b
+    V0_xi[3, 3] = c
+    V0_xi[4, 4] = d
+    V0_xi[(0, 3, 1, 4), (3, 0, 4, 1)] = e
+    V0_xi[(0, 1, 3, 4), (1, 0, 4, 3)] = f
+    V0_xi[(0, 1, 6, 7), (6, 7, 0, 1)] = g
+    V0_xi[(3, 4, 6, 7), (6, 7, 3, 4)] = h
+    V0_xi[(0, 2, 3, 5), (2, 0, 5, 3)] = i
+    V0_xi[(1, 2, 4, 5), (2, 1, 5, 4)] = j
+    V0_xi[(2, 5, 6, 7), (2, 5, 6, 7)] = k
+
+    V0_xi = V0_xi.transpose(2, 0, 1)
+
+    return V0_xi
 
 
 def calc_normalize_mat(x):
@@ -69,41 +111,6 @@ def correct_rank_to_optimal(F, x1, x2, f0):
 
         return res.T
 
-    def calc_V0_xi(x1, x2, f0):
-        V0_xi = np.zeros((9, 9, x1.shape[0]))
-
-        x1_0 = x1[:, 0]  # x
-        x1_1 = x1[:, 1]  # y
-        x2_0 = x2[:, 0]  # x'
-        x2_1 = x2[:, 1]  # y'
-
-        a = x1_0**2 + x2_0**2
-        b = x1_0**2 + x2_1**2
-        c = x1_1**2 + x2_0**2
-        d = x1_1**2 + x2_1**2
-        e = x1_0 * x1_1
-        f = x2_0 * x2_1
-        g = f0 * x1_0
-        h = f0 * x1_1
-        i = f0 * x2_0
-        j = f0 * x2_1
-        k = f0**2
-
-        V0_xi[0, 0] = a
-        V0_xi[1, 1] = b
-        V0_xi[3, 3] = c
-        V0_xi[4, 4] = d
-        V0_xi[(0, 3, 1, 4), (3, 0, 4, 1)] = e
-        V0_xi[(0, 1, 3, 4), (1, 0, 4, 3)] = f
-        V0_xi[(0, 1, 6, 7), (6, 7, 0, 1)] = g
-        V0_xi[(3, 4, 6, 7), (6, 7, 3, 4)] = h
-        V0_xi[(0, 2, 3, 5), (2, 0, 5, 3)] = i
-        V0_xi[(1, 2, 4, 5), (2, 1, 5, 4)] = j
-        V0_xi[(2, 5, 6, 7), (2, 5, 6, 7)] = k
-
-        V0_xi = V0_xi.transpose(2, 0, 1)
-        return V0_xi
-
     def calc_V0_theta(M):
         S, U = np.linalg.eig(M)
         desc_idx = np.argsort(S)[::-1]
@@ -115,7 +122,7 @@ def correct_rank_to_optimal(F, x1, x2, f0):
 
         return V0_theta
 
-    xi_array = calc_xi_array(x1, x2, f0)
+    xi = calc_xi(x1, x2, f0)
 
     # (3, 3) -> (9,)
     theta = F.ravel()
@@ -124,7 +131,7 @@ def correct_rank_to_optimal(F, x1, x2, f0):
     P_theta = calc_P_theta(theta)
 
     # (n, 9)
-    P_theta_xi = xi_array @ P_theta.T
+    P_theta_xi = xi @ P_theta.T
 
     # (n, 9, 1) @ (n, 1, 9) -> (n, 9, 9)
     num = P_theta_xi[..., np.newaxis] @ P_theta_xi[:, np.newaxis, :]
@@ -179,6 +186,12 @@ def calc_fundamental_matrix_8points_method(x1, x2, f0, normalize=True, optimal=T
 
         x1_ext = x1_ext @ W1.T
         x2_ext = x2_ext @ W2.T
+
+        from lib.visualization import subplot_2d_points
+        import matplotlib.pyplot as plt
+
+        subplot_2d_points(x1_ext[:, :2], x2_ext[:, :2])
+        plt.show()
 
     x1_ext = np.repeat(x1_ext, 3, axis=1)
     x2_ext = np.tile(x2_ext, 3)
