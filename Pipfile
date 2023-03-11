@@ -8,6 +8,7 @@ numpy = "*"
 numpy-quaternion = "*"
 matplotlib = "*"
 opencv-python = "*"
+scipy = "*"
 
 [dev-packages]
 black = "*"
