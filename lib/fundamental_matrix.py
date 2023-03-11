@@ -3,6 +3,25 @@ import numpy as np
 from .utils import unit_vec
 
 
+def calc_xi_array(x1, x2, f0):
+    """
+    x, x' = x1, x2, (x)i1 = xi, (x)i2 = yiとしたとき、以下のデータを返す
+    xi_array = [
+        [x1*x'1, x1*y'1, f0*x1, y1*x'1, y1*y'1, f0*y1, f0*x'1, f0*y'1, f0**2]
+        [x2*x'2, x2*y'2, f0*x2, y2*x'2, y2*y'2, f0*y2, f0*x'2, f0*y'2, f0**2]
+        ...
+        [xn*x'n, xn*y'n, f0*xn, yn*x'n, yn*y'n, f0*yn, f0*x'n, f0*y'n, f0**2]
+    ]
+    """
+    x1_ext = np.hstack((x1, f0 * np.ones((x1.shape[0], 1))))
+    x2_ext = np.hstack((x2, f0 * np.ones((x2.shape[0], 1))))
+    x1_ext = np.repeat(x1_ext, 3, axis=1)
+    x2_ext = np.tile(x2_ext, 3)
+    xi_array = x1_ext * x2_ext
+
+    return xi_array
+
+
 def calc_normalize_mat(x):
     """データ点を原点中心に移動して、平均ノルムがsqrt(2)となる正規化行列を求める"""
 
@@ -96,11 +115,7 @@ def correct_rank_to_optimal(F, x1, x2, f0):
 
         return V0_theta
 
-    x1_ext = np.hstack((x1, np.ones((x1.shape[0], 1))))
-    x2_ext = np.hstack((x2, np.ones((x2.shape[0], 1))))
-    x1_ext = np.repeat(x1_ext, 3, axis=1)
-    x2_ext = np.tile(x2_ext, 3)
-    xi_array = x1_ext * x2_ext
+    xi_array = calc_xi_array(x1, x2, f0)
 
     # (3, 3) -> (9,)
     theta = F.ravel()
