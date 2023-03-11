@@ -1,10 +1,9 @@
-import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 
+from lib.fundamental_matrix import calc_fundamental_matrix_8points_method
 from lib.epipolar_geometry import (
     calc_focal_length,
-    calc_fundamental_matrix_8points_method,
     calc_motion_parameters,
     calc_camera_matrix,
     reconstruct_3d_points,
@@ -92,14 +91,14 @@ def main():
     # 2次元画像平面へ射影
     x1 = camera1.project_points(X, f0)
     x2 = camera2.project_points(X, f0)
-    x1 += 0.02 * np.random.rand(*x1.shape)
-    x2 += 0.02 * np.random.rand(*x2.shape)
+    x1 += 0.01 * np.random.rand(*x1.shape)
+    x2 += 0.01 * np.random.rand(*x2.shape)
 
     R1, t1 = camera1.get_pose()
     R2, t2 = camera2.get_pose()
 
     # 基礎行列の計算
-    F = calc_fundamental_matrix_8points_method(x1, x2, f0, normalize=True)
+    F = calc_fundamental_matrix_8points_method(x1, x2, f0, normalize=True, optimal=True)
     # F = calc_true_F(R2, t2, f_, f_prime_, f0)
     print(f"F={F}")
 
