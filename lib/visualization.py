@@ -43,6 +43,20 @@ def plot_2d_points(x, ax, color="black") -> None:
     ax.scatter(x[:, 1], x[:, 0], c=color, marker=".")
 
 
+def subplot_2d_points(x1, x2, color="black"):
+    ax1 = plt.subplot(1, 2, 1)
+    ax1.set_xlim(-2, 2)
+    ax1.set_ylim(-2, 2)
+    plt.grid()
+    plot_2d_points(x1, ax1, color=color)
+
+    ax2 = plt.subplot(1, 2, 2)
+    ax2.set_xlim(-2, 2)
+    ax2.set_ylim(-2, 2)
+    plt.grid()
+    plot_2d_points(x2, ax2, color=color)
+
+
 if __name__ == "__main__":
     import numpy as np
 
