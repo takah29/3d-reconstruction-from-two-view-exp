@@ -3,7 +3,7 @@ import numpy as np
 from .utils import unit_vec
 
 
-def calc_xi(x1, x2, f0):
+def _calc_xi(x1, x2, f0):
     """
     x, x' = x1, x2, (x)i1 = xi, (x)i2 = yiとしたとき、以下のデータを返す
     xi = [
@@ -23,7 +23,7 @@ def calc_xi(x1, x2, f0):
     return xi
 
 
-def calc_V0_xi(x1, x2, f0):
+def _calc_V0_xi(x1, x2, f0):
     """各データの正規化共分散行列を求める
 
     V0_xi.shape = (n, 9, 9)
@@ -64,7 +64,7 @@ def calc_V0_xi(x1, x2, f0):
     return V0_xi
 
 
-def calc_normalize_mat(x):
+def _calc_normalize_mat(x):
     """データ点を原点中心に移動して、平均ノルムがsqrt(2)となる正規化行列を求める"""
 
     x_ = x[:, :2]
@@ -76,7 +76,7 @@ def calc_normalize_mat(x):
     return W
 
 
-def correct_rank(F):
+def _correct_rank(F):
     """基礎行列Fのランクを補正する
 
     rank(F) = 2, norm(F) = 1 にする
@@ -91,7 +91,7 @@ def correct_rank(F):
     return F_
 
 
-def correct_rank_to_optimal(F, x1, x2, f0):
+def _correct_rank_to_optimal(F, x1, x2, f0):
     def calc_P_theta(theta):
         return np.eye(theta.shape[0]) - theta[:, np.newaxis] @ theta[np.newaxis]
 
@@ -122,7 +122,7 @@ def correct_rank_to_optimal(F, x1, x2, f0):
 
         return V0_theta
 
-    xi = calc_xi(x1, x2, f0)
+    xi = _calc_xi(x1, x2, f0)
 
     # (3, 3) -> (9,)
     theta = F.ravel()
@@ -137,7 +137,7 @@ def correct_rank_to_optimal(F, x1, x2, f0):
     num = P_theta_xi[..., np.newaxis] @ P_theta_xi[:, np.newaxis, :]
 
     # (n, 9, 9)
-    V0_xi = calc_V0_xi(x1, x2, f0)
+    V0_xi = _calc_V0_xi(x1, x2, f0)
 
     # (9, ) @ (n, 9, 9) @ (9, 1) -> (n, 1) ?
     denom = theta @ (V0_xi @ theta[:, np.newaxis])
@@ -181,8 +181,8 @@ def calc_fundamental_matrix_8points_method(x1, x2, f0, normalize=True, optimal=T
     x2_ext = np.hstack((x2 / f0, np.ones((x2.shape[0], 1))))
 
     if normalize:
-        W1 = calc_normalize_mat(x1_ext)
-        W2 = calc_normalize_mat(x2_ext)
+        W1 = _calc_normalize_mat(x1_ext)
+        W2 = _calc_normalize_mat(x2_ext)
 
         x1_ext = x1_ext @ W1.T
         x2_ext = x2_ext @ W2.T
@@ -202,9 +202,9 @@ def calc_fundamental_matrix_8points_method(x1, x2, f0, normalize=True, optimal=T
 
     # rank(F) = 2に補正する
     if optimal:
-        F_ = correct_rank_to_optimal(F, x1, x2, f0)
+        F_ = _correct_rank_to_optimal(F, x1, x2, f0)
     else:
-        F_ = correct_rank(F)
+        F_ = _correct_rank(F)
 
     if normalize:
         F_ = W1.T @ F_ @ W2
@@ -218,7 +218,7 @@ def remove_outliers(x1, x2, f0, d):
     count = 0
 
     while True:
-        xi = calc_xi(x1, x2, f0)
+        xi = _calc_xi(x1, x2, f0)
         rnd_ind = np.random.choice(np.arange(x1.shape[0]), 8, replace=False)
         sub_xi = xi[rnd_ind]
 
@@ -232,7 +232,7 @@ def remove_outliers(x1, x2, f0, d):
         num = (xi @ theta_[:, np.newaxis]).squeeze(1) ** 2
 
         # (n, 9, 9) @ (9, 1) -> (n, 9, 1) -> (n, 9) -> (9, n)
-        V0_xi_theta_t = (calc_V0_xi(x1, x2, f0) @ theta_[:, np.newaxis]).squeeze(2).T
+        V0_xi_theta_t = (_calc_V0_xi(x1, x2, f0) @ theta_[:, np.newaxis]).squeeze(2).T
         # (9, ) @ (9, n) -> (n, )
         denom = theta_ @ V0_xi_theta_t
 
