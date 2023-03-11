@@ -5,8 +5,10 @@ from .utils import unit_vec
 
 def calc_normalize_mat(x):
     """データ点を原点中心に移動して、平均ノルムがsqrt(2)となる正規化行列を求める"""
-    m = x.mean(axis=0)
-    s = np.sqrt(2) / np.linalg.norm(x - m, axis=1).mean()
+
+    x_ = x[:, :2]
+    m = x_.mean(axis=0)
+    s = np.sqrt(2) / np.linalg.norm(x_ - m, axis=1).mean()
     S = np.array([[s, 0], [0, s]])
     W = np.block([[S, -s * m[:, np.newaxis]], [np.zeros(2), 1]])
 
@@ -157,8 +159,8 @@ def calc_fundamental_matrix_8points_method(x1, x2, f0, normalize=True, optimal=T
     x2_ext = np.hstack((x2 / f0, np.ones((x2.shape[0], 1))))
 
     if normalize:
-        W1 = calc_normalize_mat(x1)
-        W2 = calc_normalize_mat(x2)
+        W1 = calc_normalize_mat(x1_ext)
+        W2 = calc_normalize_mat(x2_ext)
 
         x1_ext = x1_ext @ W1.T
         x2_ext = x2_ext @ W2.T
