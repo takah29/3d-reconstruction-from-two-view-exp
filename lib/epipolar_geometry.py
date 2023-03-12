@@ -1,6 +1,8 @@
 import numpy as np
 import cv2
 
+EPS = 1e-8
+
 
 def convert_image_coord_to_screen_coord(points):
     return np.hstack((-points[:, -1:], points[:, :1]))
@@ -67,8 +69,11 @@ def calc_epipole(F):
     return np.vstack((e1 / e1[2], e2 / e2[2]))[:, :2]
 
 
-def calc_focal_length(F, f0, verbose=False):
-    """基礎行列Fから焦点距離f,f_primeを計算する"""
+def calc_free_focal_length(F, f0, verbose=False):
+    """基礎行列Fから焦点距離f,f_primeを計算する
+
+    Reference: http://iim.cs.tut.ac.jp/member/kanatani/papers/new2views.pdf
+    """
     # 最小固有値に対する固有ベクトルを取得する
     FFt = F @ F.T
     FtF = F.T @ F
@@ -106,6 +111,56 @@ def calc_focal_length(F, f0, verbose=False):
     f_prime = f0 / np.sqrt(1 + ita)
 
     return f, f_prime
+
+
+def calc_fixed_focal_length(F, f0):
+    """基礎行列Fから焦点距離fをf=f_primeとして計算する
+
+    Reference: http://iim.cs.tut.ac.jp/member/kanatani/papers/new2views.pdf
+    """
+    FFt = F @ F.T
+    FtF = F.T @ F
+
+    k = np.array([[0.0], [0.0], [1.0]])
+
+    Fk = F @ k
+    Ftk = F.T @ k
+
+    Fk_norm2 = np.linalg.norm(Fk) ** 2
+    Ftk_norm2 = np.linalg.norm(Ftk) ** 2
+
+    k_dot_Fk = (k.T @ Fk)[0][0]
+    k_dot_FFtFk = (k.T @ (FFt @ Fk))[0][0]
+
+    F_norm2 = np.linalg.norm(F) ** 2
+    FFt_norm2 = np.linalg.norm(FFt) ** 2
+    FFtk_norm2 = np.linalg.norm(FFt @ k) ** 2
+    FtFk_norm2 = np.linalg.norm(FtF @ k) ** 2
+
+    a1 = k_dot_Fk**4 / 2
+    a2 = k_dot_Fk**2 * (Ftk_norm2 + Fk_norm2)
+    a3 = (Ftk_norm2 - Fk_norm2) ** 2 / 2 + k_dot_Fk * (4 * (k_dot_FFtFk - k_dot_Fk * F_norm2))
+    a4 = 2 * (FFtk_norm2 + FtFk_norm2) - (Ftk_norm2 + Fk_norm2) * F_norm2
+    a5 = FFt_norm2 - F_norm2**2 / 2
+
+    if np.abs(k_dot_Fk) < EPS:
+        xi = -a4 / (2 * a3)
+    else:
+        K = np.polynomial.Polynomial([a5, a4, a3, a2, a1])
+        K_diff = K.deriv()
+        roots = np.sort([x.real for x in K_diff.roots() if x.imag == 0.0])[::-1]
+        print(roots)
+        if len(roots) == 1:
+            xi = roots[0]
+        else:
+            if roots[2] <= -1 or K(roots[2]) < 0 or K(roots[0]) <= K(roots[2]):
+                xi = roots[0]
+            elif 0 <= K(roots[2]) < K(roots[0]):
+                xi = roots[2]
+            else:
+                xi = -1.0
+
+    return f0 / np.sqrt(1 + xi)
 
 
 def calc_motion_parameters(F, x1, x2, f, f_prime, f0):
