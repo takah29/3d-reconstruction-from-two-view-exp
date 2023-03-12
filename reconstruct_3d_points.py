@@ -8,7 +8,8 @@ from lib.fundamental_matrix import (
     remove_outliers,
 )
 from lib.epipolar_geometry import (
-    calc_focal_length,
+    calc_free_focal_length,
+    calc_fixed_focal_length,
     calc_motion_parameters,
     detect_corresponding_points,
     calc_camera_matrix,
@@ -42,7 +43,7 @@ def main():
     F = calc_fundamental_matrix_extended_fns_method(x1, x2, f0)
 
     # 焦点距離f, f_primeの計算
-    f, f_prime = calc_focal_length(F, f0)
+    f = f_prime = calc_fixed_focal_length(F, f0)
 
     # 運動パラメータの計算
     R, t = calc_motion_parameters(F, x1, x2, f, f_prime, f0)

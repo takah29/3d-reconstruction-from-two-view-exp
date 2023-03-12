@@ -8,7 +8,8 @@ from lib.fundamental_matrix import (
     remove_outliers,
 )
 from lib.epipolar_geometry import (
-    calc_focal_length,
+    calc_free_focal_length,
+    calc_fixed_focal_length,
     calc_motion_parameters,
     calc_camera_matrix,
     reconstruct_3d_points,
@@ -85,7 +86,7 @@ def calc_true_F(R, t, f, f_prime, f0):
 
 def main():
     f_ = 1.0
-    f_prime_ = 1.5
+    f_prime_ = 1.0
     camera1 = Camera([0, 0, 0], [0, 0, 3], f_)
     camera2 = Camera([2, 2, 1.1], [0.5, 0, 3], f_prime_)
 
@@ -101,8 +102,8 @@ def main():
     x2 += 0.01 * np.random.randn(*x2.shape)
 
     # アウトライアの追加
-    x1 = np.vstack((x1, 0.5 * np.random.randn(20, 2)))
-    x2 = np.vstack((x2, 0.5 * np.random.randn(20, 2)))
+    # x1 = np.vstack((x1, 0.5 * np.random.randn(20, 2)))
+    # 2 = np.vstack((x2, 0.5 * np.random.randn(20, 2)))
 
     R1, t1 = camera1.get_pose()
     R2, t2 = camera2.get_pose()
@@ -125,7 +126,8 @@ def main():
     print(f"e1={epipole[0]}, e2={epipole[1]}")
 
     # 焦点距離f, f_primeの計算
-    f, f_prime = calc_focal_length(F, f0, verbose=True)
+    # f, f_prime = calc_free_focal_length(F, f0, verbose=True)
+    f = f_prime = calc_fixed_focal_length(F, f0)
     # f, f_prime = f_, f_prime_
     print(f"f={f}, f_prime={f_prime}")
 
