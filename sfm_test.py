@@ -4,6 +4,7 @@ import numpy as np
 from lib.fundamental_matrix import (
     calc_fundamental_matrix_8points_method,
     calc_fundamental_matrix_taubin_method,
+    calc_fundamental_matrix_extended_fns_method,
     remove_outliers,
 )
 from lib.epipolar_geometry import (
@@ -75,7 +76,7 @@ def set_points_box():
             [-1, -1, -1],
         ]
     )
-    return points + np.array([0, 3, 0])
+    return points + np.array([0, 0, 3])
 
 
 def calc_true_F(R, t, f, f_prime, f0):
@@ -83,10 +84,10 @@ def calc_true_F(R, t, f, f_prime, f0):
 
 
 def main():
-    f_ = 1.5
-    f_prime_ = 1.0
-    camera1 = Camera([0, 1, 0], [0, 1, 3], f_)
-    camera2 = Camera([2, 2, 1.1], [1, 0, 3], f_prime_)
+    f_ = 1.0
+    f_prime_ = 1.5
+    camera1 = Camera([0, 0, 0], [0, 0, 3], f_)
+    camera2 = Camera([2, 2, 1.1], [0.5, 0, 3], f_prime_)
 
     # データ点の設定
     X = set_points()
@@ -100,8 +101,8 @@ def main():
     x2 += 0.01 * np.random.randn(*x2.shape)
 
     # アウトライアの追加
-    #x1 = np.vstack((x1, 0.5 * np.random.randn(20, 2)))
-    #x2 = np.vstack((x2, 0.5 * np.random.randn(20, 2)))
+    x1 = np.vstack((x1, 0.5 * np.random.randn(20, 2)))
+    x2 = np.vstack((x2, 0.5 * np.random.randn(20, 2)))
 
     R1, t1 = camera1.get_pose()
     R2, t2 = camera2.get_pose()
@@ -114,7 +115,8 @@ def main():
 
     # 基礎行列の計算
     # F = calc_fundamental_matrix_8points_method(x1, x2, f0, normalize=True, optimal=True)
-    F = calc_fundamental_matrix_taubin_method(x1, x2, f0)
+    # F = calc_fundamental_matrix_taubin_method(x1, x2, f0)
+    F = calc_fundamental_matrix_extended_fns_method(x1, x2, f0)
     F_ = calc_true_F(R2, t2, f_, f_prime_, f0)
     print(f"|F_ - F|={np.linalg.norm(F_ - F)}")
 
@@ -123,7 +125,7 @@ def main():
     print(f"e1={epipole[0]}, e2={epipole[1]}")
 
     # 焦点距離f, f_primeの計算
-    f, f_prime = calc_focal_length(F, f0)
+    f, f_prime = calc_focal_length(F, f0, verbose=True)
     # f, f_prime = f_, f_prime_
     print(f"f={f}, f_prime={f_prime}")
 

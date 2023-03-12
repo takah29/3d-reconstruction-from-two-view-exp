@@ -2,14 +2,18 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 
-from lib.fundamental_matrix import calc_fundamental_matrix_8points_method, remove_outliers
+from lib.fundamental_matrix import (
+    calc_fundamental_matrix_8points_method,
+    calc_fundamental_matrix_extended_fns_method,
+    remove_outliers,
+)
 from lib.epipolar_geometry import (
     calc_focal_length,
     calc_motion_parameters,
     detect_corresponding_points,
     calc_camera_matrix,
     reconstruct_3d_points,
-    convert_image_coord_to_screen_coord
+    convert_image_coord_to_screen_coord,
 )
 from lib.visualization import init_3d_ax, plot_3d_basis, plot_3d_points
 
@@ -30,11 +34,12 @@ def main():
 
     # アウトライアの除去
     print(x1.shape)
-    x1, x2, _ = remove_outliers(x1, x2, f0, 2)
+    x1, x2, _ = remove_outliers(x1, x2, f0, 3)
     print(x1.shape)
 
     # 基礎行列Fの計算
-    F = calc_fundamental_matrix_8points_method(x1, x2, f0, normalize=True, optimal=True)
+    # F = calc_fundamental_matrix_8points_method(x1, x2, f0, normalize=True, optimal=True)
+    F = calc_fundamental_matrix_extended_fns_method(x1, x2, f0)
 
     # 焦点距離f, f_primeの計算
     f, f_prime = calc_focal_length(F, f0)
