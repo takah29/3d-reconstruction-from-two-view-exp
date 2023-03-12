@@ -283,6 +283,77 @@ def calc_fundamental_matrix_extended_fns_method(x1, x2, f0):
     return theta_prime.reshape(3, 3)
 
 
+def optimize_corresponding_points(F, x1, x2, f0):
+    S0 = float("inf")
+
+    x1_hat = x1.copy()
+    x2_hat = x2.copy()
+
+    x1_tilda = np.zeros(x1.shape)
+    x2_tilda = np.zeros(x2.shape)
+
+    def calc_xi_star(x1_hat, x2_hat, x1_tilda, x2_tilda, f0):
+        x_h = x1_hat[:, 0]  # x^
+        y_h = x1_hat[:, 1]  # y^
+        xp_h = x2_hat[:, 0]  # x^'
+        yp_h = x2_hat[:, 1]  # y^'
+
+        x_t = x1_tilda[:, 0]  # x~
+        y_t = x1_tilda[:, 1]  # y~
+        xp_t = x2_tilda[:, 0]  # x~'
+        yp_t = x2_tilda[:, 1]  # y~'
+
+        xi_star = np.zeros((9, x1_hat.shape[0]))
+        xi_star[0] = x_h * xp_h + xp_h * x_t + x_h * xp_t
+        xi_star[1] = x_h * yp_h + yp_h * x_t + x_h * yp_t
+        xi_star[2] = f0 * (x_h + x_t)
+        xi_star[3] = y_h * xp_h + xp_h * y_t + y_h * xp_t
+        xi_star[4] = y_h * yp_h + yp_h * y_t + y_h * yp_t
+        xi_star[5] = f0 * (y_h + y_t)
+        xi_star[6] = f0 * (xp_h + xp_t)
+        xi_star[7] = f0 * (yp_h + yp_t)
+        xi_star[8] = f0 * f0
+
+        return xi_star.T
+
+    theta = F.ravel()
+
+    while True:
+        V0_xi_hat = _calc_V0_xi(x1_hat, x2_hat, f0)
+        xi_star = calc_xi_star(x1_hat, x2_hat, x1_tilda, x2_tilda, f0)
+
+        # (n, 9) @ (9, 1) -> (n, 1) -> (n, )
+        num = (xi_star @ theta[:, np.newaxis]).ravel()
+        # (n, 9, 9) @ (9, 1) -> (n, 9, 1) -> (n, 9) -> (9, n)
+        V0_xi_hat_theta_t = (V0_xi_hat @ theta[:, np.newaxis]).squeeze(2).T
+        # (9, ) @ (n, 9) -> (n, )
+        denom = theta @ V0_xi_hat_theta_t
+        # (n, ) / (n, ) -> (n, )
+        coefs = num / denom
+
+        T1 = theta[:6].reshape(2, 3).T
+        x1_hat_ext = np.hstack((x1_hat, f0 * np.ones((x1_hat.shape[0], 1))))
+        # (n, 1) * (n, 3) @ (3, 2) -> (n, 2)
+        x1_tilda = coefs[:, np.newaxis] * x1_hat_ext @ T1
+
+        T2 = np.vstack((theta[::3], theta[1::3])).T
+        x2_hat_ext = np.hstack((x2_hat, f0 * np.ones((x2_hat.shape[0], 1))))
+        # (n, 1) * (n, 3) @ (3, 2) -> (n, 2)
+        x2_tilda = coefs[:, np.newaxis] * x2_hat_ext @ T2
+
+        x1_hat = x1 - x1_tilda
+        x2_hat = x2 - x2_tilda
+
+        S = (x1_tilda**2 + x2_tilda**2).sum()
+        print(S)
+        if np.abs(S0 - S) < 1e-4:
+            break
+
+        S0 = S
+
+    return x1_hat, x2_hat
+
+
 def remove_outliers(x1, x2, f0, d):
     """RANSACによるアウトライア除去を行う"""
     max_n = 0
