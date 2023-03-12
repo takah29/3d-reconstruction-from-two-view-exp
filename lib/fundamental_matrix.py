@@ -4,6 +4,24 @@ from scipy.linalg import eig
 from .utils import unit_vec
 
 
+def _cofactor(A, i, j):
+    X = np.delete(A, i, axis=0)
+    X = np.delete(X, j, axis=1)
+    a_ij = (-1) ** (i + j) * np.linalg.det(X)
+
+    return a_ij
+
+
+def _adjugate_mat(A):
+    max_i, max_j = A.shape
+    res = np.zeros(A.shape)
+    for i in range(max_i):
+        for j in range(max_j):
+            res[i, j] = _cofactor(A, i, j)
+
+    return res.T
+
+
 def _calc_xi(x1, x2, f0):
     """
     x, x' = x1, x2, (x)i1 = xi, (x)i2 = yiとしたとき、以下のデータを返す
@@ -96,22 +114,6 @@ def _correct_rank_to_optimal(F, x1, x2, f0):
     def calc_P_theta(theta):
         return np.eye(theta.shape[0]) - theta[:, np.newaxis] @ theta[np.newaxis]
 
-    def cofactor(A, i, j):
-        X = np.delete(A, i, axis=0)
-        X = np.delete(X, j, axis=1)
-        a_ij = (-1) ** (i + j) * np.linalg.det(X)
-
-        return a_ij
-
-    def adjugate_mat(A):
-        max_i, max_j = A.shape
-        res = np.zeros(A.shape)
-        for i in range(max_i):
-            for j in range(max_j):
-                res[i, j] = cofactor(A, i, j)
-
-        return res.T
-
     def calc_V0_theta(M):
         S, U = np.linalg.eig(M)
         desc_idx = np.argsort(S)[::-1]
@@ -151,7 +153,7 @@ def _correct_rank_to_optimal(F, x1, x2, f0):
 
     while True:
         # Fの余因子行列を転置して1次元化する
-        theta_dagger = adjugate_mat(theta.reshape(3, 3)).T.ravel()
+        theta_dagger = _adjugate_mat(theta.reshape(3, 3)).T.ravel()
 
         V0_theta_theta_dagger = V0_theta @ theta_dagger
         alpha = (theta_dagger @ theta * V0_theta_theta_dagger) / (
@@ -221,8 +223,6 @@ def calc_fundamental_matrix_taubin_method(x1, x2, f0):
     # (n, 9, 9) -> (9, 9)
     N = _calc_V0_xi(x1, x2, f0).mean(axis=0)
 
-    # S, U = eig(M, N)
-    print(N)
     S, U = eig(M, N)
     F = U[:, np.argmin(S)].reshape(3, 3)
 
