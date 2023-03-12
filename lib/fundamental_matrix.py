@@ -229,6 +229,60 @@ def calc_fundamental_matrix_taubin_method(x1, x2, f0):
     return F
 
 
+def calc_fundamental_matrix_extended_fns_method(x1, x2, f0):
+    # Initial value
+    theta = calc_fundamental_matrix_taubin_method(x1, x2, f0).ravel()
+
+    # (n, 9)
+    xi = _calc_xi(x1, x2, f0)
+    # (n, 9, 1) @ (n, 1, 9) -> (n, 9, 9)
+    M_num = xi[..., np.newaxis] @ xi[:, np.newaxis, :]
+    # (n, 9, 9)
+    V0_xi = _calc_V0_xi(x1, x2, f0)
+
+    while True:
+        # (n, 9, 9) @ (9, 1) -> (n, 9, 1) -> (n, 9) -> (9, n)
+        V0_xi_theta_t = (V0_xi @ theta[:, np.newaxis]).squeeze(2).T
+        # (9, ) @ (9, n) -> -> (n, ) -> (n, 1, 1)
+        denom = (theta @ V0_xi_theta_t)[:, np.newaxis, np.newaxis]
+        # (n, 9, 9) / (n, 1, 1) -> (n, 9, 9) -> (9, 9)
+        M = (M_num / denom).mean(axis=0)
+
+        # (n, 9) @ (9, 1) -> (n, 1)
+        L_num = (xi @ theta[:, np.newaxis]) ** 2
+        # (n ,1, 1) / (n, 1, 1) * (n, 9, 9) -> (n, 9, 9) -> (9, 9)
+        L = (L_num[..., np.newaxis] / (denom ** 2) * V0_xi).mean(axis=0)
+
+        # (9, )
+        unit_theta_dagger = unit_vec(_adjugate_mat(theta.reshape(3, 3)).T.ravel())
+
+        # (9, 9) - (9, 1) @ (1, 9) -> (9, 9)
+        P_theta_dagger = (
+            np.eye(9) - unit_theta_dagger[:, np.newaxis] @ unit_theta_dagger[np.newaxis]
+        )
+
+        X = M - L
+        # (9, 9) @ (9, 9) @ (9, 9) -> (9, 9)
+        Y = P_theta_dagger @ X @ P_theta_dagger
+
+        # ２つの小さい固有値に対応する固有ベクトルVを取得する
+        S, U = np.linalg.eig(Y)
+        V = U[:, np.argsort(S)[:2]]
+
+        # (9, 2) @ (2, 9) @ (9, 1) -> (9, 1)
+        # Equivalent to θ^ = <θ, v1>v1 + <θ, v2>v2
+        theta_hat = V @ V.T @ theta[:, np.newaxis]
+        # (9, 9) @ (9, 1) -> (9, 1) -> (9, )
+        theta_prime = unit_vec(P_theta_dagger @ theta_hat).ravel()
+
+        if np.linalg.norm(theta_prime - theta) < 1e-8:
+            break
+
+        theta = unit_vec(theta + theta_prime)
+
+    return theta_prime.reshape(3, 3)
+
+
 def remove_outliers(x1, x2, f0, d):
     """RANSACによるアウトライア除去を行う"""
     max_n = 0
