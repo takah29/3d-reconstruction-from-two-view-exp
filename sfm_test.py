@@ -85,6 +85,8 @@ def calc_true_F(R, t, f, f_prime, f0):
 
 
 def main():
+    np.random.seed(8)
+
     f_ = 1.0
     f_prime_ = 1.0
     camera1 = Camera([0, 0, 0], [0, 0, 3], f_)
@@ -103,7 +105,7 @@ def main():
 
     # アウトライアの追加
     # x1 = np.vstack((x1, 0.5 * np.random.randn(20, 2)))
-    # 2 = np.vstack((x2, 0.5 * np.random.randn(20, 2)))
+    # x2 = np.vstack((x2, 0.5 * np.random.randn(20, 2)))
 
     R1, t1 = camera1.get_pose()
     R2, t2 = camera2.get_pose()
