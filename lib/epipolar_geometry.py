@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 
+
 EPS = 1e-8
 
 
@@ -149,7 +150,6 @@ def calc_fixed_focal_length(F, f0):
         K = np.polynomial.Polynomial([a5, a4, a3, a2, a1])
         K_diff = K.deriv()
         roots = np.sort([x.real for x in K_diff.roots() if x.imag == 0.0])[::-1]
-        print(roots)
         if len(roots) == 1:
             xi = roots[0]
         else:
@@ -164,6 +164,7 @@ def calc_fixed_focal_length(F, f0):
 
 
 def calc_motion_parameters(F, x1, x2, f, f_prime, f0):
+    """運動パラメータを計算する"""
     f0_inv = 1 / f0
     E = np.diag((f0_inv, f0_inv, 1 / f)) @ F @ np.diag((f0_inv, f0_inv, 1 / f_prime))
     S, P = np.linalg.eig(E @ E.T)
@@ -186,6 +187,7 @@ def calc_motion_parameters(F, x1, x2, f, f_prime, f0):
 
 
 def calc_camera_matrix(f, f_prime, R, t, f0):
+    """焦点距離と運動パラメータからカメラ行列を計算する"""
     P = np.diag((f, f, f0)) @ np.block([np.eye(3), np.zeros((3, 1))])
     P_prime = np.diag((f_prime, f_prime, f0)) @ np.block([R.T, -R.T @ t[:, np.newaxis]])
 
@@ -193,6 +195,7 @@ def calc_camera_matrix(f, f_prime, R, t, f0):
 
 
 def reconstruct_3d_points(x1, x2, P, P_prime, f0):
+    """カメラ行列から3次元点を復元する"""
     # (4, 4)
     K1 = f0 * np.vstack((P[:2], P_prime[:2]))
 

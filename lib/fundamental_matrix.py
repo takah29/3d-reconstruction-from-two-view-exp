@@ -3,8 +3,11 @@ import numpy as np
 from scipy.linalg import eig
 from .utils import unit_vec
 
+EPS = 1e-8
+
 
 def _cofactor(A, i, j):
+    """余因子行列の行列式を計算する"""
     X = np.delete(A, i, axis=0)
     X = np.delete(X, j, axis=1)
     a_ij = (-1) ** (i + j) * np.linalg.det(X)
@@ -13,6 +16,7 @@ def _cofactor(A, i, j):
 
 
 def _adjugate_mat(A):
+    """余因子行列を計算する"""
     max_i, max_j = A.shape
     res = np.zeros(A.shape)
     for i in range(max_i):
@@ -163,7 +167,7 @@ def _correct_rank_to_optimal(F, x1, x2, f0):
         P_theta = calc_P_theta(theta)
         V0_theta = P_theta @ V0_theta @ P_theta
 
-        if np.linalg.norm(theta_dagger.dot(theta)) < 1e-8:
+        if np.linalg.norm(theta_dagger.dot(theta)) < EPS:
             break
 
     return theta.reshape(3, 3)
@@ -251,7 +255,7 @@ def calc_fundamental_matrix_extended_fns_method(x1, x2, f0):
         # (n, 9) @ (9, 1) -> (n, 1)
         L_num = (xi @ theta[:, np.newaxis]) ** 2
         # (n ,1, 1) / (n, 1, 1) * (n, 9, 9) -> (n, 9, 9) -> (9, 9)
-        L = (L_num[..., np.newaxis] / (denom ** 2) * V0_xi).mean(axis=0)
+        L = (L_num[..., np.newaxis] / (denom**2) * V0_xi).mean(axis=0)
 
         # (9, )
         unit_theta_dagger = unit_vec(_adjugate_mat(theta.reshape(3, 3)).T.ravel())
@@ -270,12 +274,11 @@ def calc_fundamental_matrix_extended_fns_method(x1, x2, f0):
         V = U[:, np.argsort(S)[:2]]
 
         # (9, 2) @ (2, 9) @ (9, 1) -> (9, 1)
-        # Equivalent to θ^ = <θ, v1>v1 + <θ, v2>v2
-        theta_hat = V @ V.T @ theta[:, np.newaxis]
+        theta_hat = V @ V.T @ theta[:, np.newaxis]  # Equivalent to θ^ = <θ, v1>v1 + <θ, v2>v2
         # (9, 9) @ (9, 1) -> (9, 1) -> (9, )
         theta_prime = unit_vec(P_theta_dagger @ theta_hat).ravel()
 
-        if np.linalg.norm(theta_prime - theta) < 1e-8:
+        if np.linalg.norm(theta_prime - theta) < EPS:
             break
 
         theta = unit_vec(theta + theta_prime)

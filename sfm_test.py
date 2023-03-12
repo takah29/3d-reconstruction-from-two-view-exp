@@ -5,6 +5,7 @@ from lib.fundamental_matrix import (
     calc_fundamental_matrix_8points_method,
     calc_fundamental_matrix_taubin_method,
     calc_fundamental_matrix_extended_fns_method,
+    optimize_corresponding_points,
     remove_outliers,
 )
 from lib.epipolar_geometry import (
@@ -85,7 +86,7 @@ def calc_true_F(R, t, f, f_prime, f0):
 
 
 def main():
-    np.random.seed(8)
+    np.random.seed(17)
 
     f_ = 1.0
     f_prime_ = 1.0
@@ -117,19 +118,22 @@ def main():
     print(f"number of outlier: {outliers.sum()}")
 
     # 基礎行列の計算
-    # F = calc_fundamental_matrix_8points_method(x1, x2, f0, normalize=True, optimal=True)
+    #F = calc_fundamental_matrix_8points_method(x1, x2, f0, normalize=True, optimal=True)
     # F = calc_fundamental_matrix_taubin_method(x1, x2, f0)
     F = calc_fundamental_matrix_extended_fns_method(x1, x2, f0)
     F_ = calc_true_F(R2, t2, f_, f_prime_, f0)
     print(f"|F_ - F|={np.linalg.norm(F_ - F)}")
+
+    # 対応点の最適補正
+    #x1, x2 = optimize_corresponding_points(F, x1, x2, f0)
 
     # エピポールの計算
     epipole = calc_epipole(F)
     print(f"e1={epipole[0]}, e2={epipole[1]}")
 
     # 焦点距離f, f_primeの計算
-    # f, f_prime = calc_free_focal_length(F, f0, verbose=True)
-    f = f_prime = calc_fixed_focal_length(F, f0)
+    f, f_prime = calc_free_focal_length(F, f0, verbose=True)
+    # f = f_prime = calc_fixed_focal_length(F, f0)
     # f, f_prime = f_, f_prime_
     print(f"f={f}, f_prime={f_prime}")
 
