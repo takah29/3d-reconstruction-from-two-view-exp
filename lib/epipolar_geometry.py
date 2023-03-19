@@ -34,7 +34,7 @@ def detect_corresponding_points(img1, img2):
 
     matches = bf_matcher.knnMatch(descript1, descript2, k=2)
 
-    ratio = 0.5
+    ratio = 0.7
     good_matches = []
     for m, n in matches:
         if m.distance < ratio * n.distance:

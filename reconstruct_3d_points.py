@@ -1,20 +1,21 @@
 import cv2
 import matplotlib.pyplot as plt
-import numpy as np
 
+from lib.epipolar_geometry import (
+    calc_camera_matrix,
+    calc_fixed_focal_length,
+    calc_free_focal_length,
+    calc_motion_parameters,
+    convert_image_coord_to_screen_coord,
+    detect_corresponding_points,
+    reconstruct_3d_points,
+)
 from lib.fundamental_matrix import (
     calc_fundamental_matrix_8points_method,
     calc_fundamental_matrix_extended_fns_method,
+    find_fundamental_matrix_cv,
+    optimize_corresponding_points,
     remove_outliers,
-)
-from lib.epipolar_geometry import (
-    calc_free_focal_length,
-    calc_fixed_focal_length,
-    calc_motion_parameters,
-    detect_corresponding_points,
-    calc_camera_matrix,
-    reconstruct_3d_points,
-    convert_image_coord_to_screen_coord,
 )
 from lib.visualization import init_3d_ax, plot_3d_basis, plot_3d_points
 
@@ -34,22 +35,23 @@ def main():
     f0 = max(img1.shape)
 
     # アウトライアの除去
-    print(x1.shape)
-    x1, x2, _ = remove_outliers(x1, x2, f0, 3)
-    print(x1.shape)
+    # print(x1.shape)
+    # x1, x2, _ = remove_outliers(x1, x2, f0, 5)
+    # print(x1.shape)
 
     # 基礎行列Fの計算
     # F = calc_fundamental_matrix_8points_method(x1, x2, f0, normalize=True, optimal=True)
     F = calc_fundamental_matrix_extended_fns_method(x1, x2, f0)
+    #F = find_fundamental_matrix_cv(x1, x2)
+
+    # 対応点の補正
+    x1, x2 = optimize_corresponding_points(F, x1, x2, f0)
 
     # 焦点距離f, f_primeの計算
-    f = f_prime = calc_fixed_focal_length(F, f0)
+    f, f_prime = calc_free_focal_length(F, f0)
 
     # 運動パラメータの計算
     R, t = calc_motion_parameters(F, x1, x2, f, f_prime, f0)
-
-    # 対応点の補正
-    # X1_, X2_ = optimize_matches(X1, X2, F)
 
     # カメラ行列の取得
     P, P_prime = calc_camera_matrix(f, f_prime, R, t, f0)
@@ -58,7 +60,7 @@ def main():
     X_ = reconstruct_3d_points(x1, x2, P, P_prime, f0)
 
     ax = init_3d_ax()
-    plot_3d_basis(t, R, ax)
+    plot_3d_basis(R, t, ax)
     plot_3d_points(X_, ax, "blue")
 
     plt.show()
