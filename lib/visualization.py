@@ -34,7 +34,7 @@ def plot_3d_basis(basis: NDArray, pos: NDArray, ax, label=None) -> None:
     )
 
     if label is not None:
-        ax.text(pos[0], pos[1], pos[2] + 1.0, label)
+        ax.text(pos[1], pos[2], pos[0], label)
 
 
 def plot_3d_points(X: NDArray, ax, color="black") -> None:
