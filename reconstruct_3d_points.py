@@ -1,3 +1,4 @@
+import numpy as np
 import cv2
 import matplotlib.pyplot as plt
 
@@ -22,8 +23,8 @@ from lib.visualization import init_3d_ax, plot_3d_basis, plot_3d_points
 
 def main():
     # 画像ファイル読み込み
-    img1 = cv2.imread("./images/002.jpg")
-    img2 = cv2.imread("./images/003.jpg")
+    img1 = cv2.imread("./images/001.jpg")
+    img2 = cv2.imread("./images/002.jpg")
 
     # 対応点の検出
     x1, x2 = detect_corresponding_points(img1, img2)
@@ -35,14 +36,14 @@ def main():
     f0 = max(img1.shape)
 
     # アウトライアの除去
-    # print(x1.shape)
-    # x1, x2, _ = remove_outliers(x1, x2, f0, 5)
-    # print(x1.shape)
+    print(x1.shape)
+    x1, x2, _ = remove_outliers(x1, x2, f0, 2)
+    print(x1.shape)
 
     # 基礎行列Fの計算
     # F = calc_fundamental_matrix_8points_method(x1, x2, f0, normalize=True, optimal=True)
     F = calc_fundamental_matrix_extended_fns_method(x1, x2, f0)
-    #F = find_fundamental_matrix_cv(x1, x2)
+    # F = find_fundamental_matrix_cv(x1, x2)
 
     # 対応点の補正
     x1, x2 = optimize_corresponding_points(F, x1, x2, f0)
@@ -60,8 +61,9 @@ def main():
     X_ = reconstruct_3d_points(x1, x2, P, P_prime, f0)
 
     ax = init_3d_ax()
-    plot_3d_basis(R, t, ax)
     plot_3d_points(X_, ax, "blue")
+    plot_3d_basis(np.eye(3), np.zeros(3), ax, label="Camera1")
+    plot_3d_basis(R, t, ax, label="Camera2")
 
     plt.show()
 
