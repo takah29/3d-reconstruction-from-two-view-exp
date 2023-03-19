@@ -95,7 +95,7 @@ def calc_free_focal_length(F, f0, verbose=False):
     k_dot_Fk = k @ Fk
     k_dot_FFtFk = k @ (FFt @ Fk)
 
-    if np.abs(k_dot_Fk) < 0.1 * np.sqrt(np.min(Fk_norm2, Ftk_norm2)) / f0:
+    if np.abs(k_dot_Fk) < 0.1 * np.sqrt(min(Fk_norm2, Ftk_norm2)) / f0:
         raise ValueError("Optical axes are crossed.")
 
     e_cross_k_norm2 = np.linalg.norm(np.cross(e, k)) ** 2
