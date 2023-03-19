@@ -234,6 +234,7 @@ def calc_fundamental_matrix_taubin_method(x1, x2, f0):
 
 
 def calc_fundamental_matrix_extended_fns_method(x1, x2, f0):
+    """拡張FNS法で基礎行列Fを求める"""
     # Initial value
     theta = calc_fundamental_matrix_taubin_method(x1, x2, f0).ravel()
 
@@ -284,6 +285,13 @@ def calc_fundamental_matrix_extended_fns_method(x1, x2, f0):
         theta = unit_vec(theta + theta_prime)
 
     return theta_prime.reshape(3, 3)
+
+
+def find_fundamental_matrix_cv(x1, x2):
+    import cv2
+
+    F, _ = cv2.findFundamentalMat(x2, x1, cv2.FM_LMEDS)
+    return F
 
 
 def optimize_corresponding_points(F, x1, x2, f0):
@@ -348,7 +356,6 @@ def optimize_corresponding_points(F, x1, x2, f0):
         x2_hat = x2 - x2_tilda
 
         S = (x1_tilda**2 + x2_tilda**2).sum()
-        print(S)
         if np.abs(S0 - S) < 1e-4:
             break
 
