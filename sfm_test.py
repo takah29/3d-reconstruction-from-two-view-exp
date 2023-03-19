@@ -14,10 +14,12 @@ from lib.fundamental_matrix import (
     calc_fundamental_matrix_8points_method,
     calc_fundamental_matrix_extended_fns_method,
     calc_fundamental_matrix_taubin_method,
+    find_fundamental_matrix_cv,
     optimize_corresponding_points,
     remove_outliers,
 )
 from lib.visualization import init_3d_ax, plot_2d_points, plot_3d_basis, plot_3d_points
+from lib.utils import unit_vec
 
 
 def set_points():
@@ -47,16 +49,20 @@ def set_points_box():
     return points + np.array([0, 0, 3])
 
 
-def calc_true_F(R, t, f, f_prime, f0):
-    return np.diag((f0, f0, f)) @ np.cross(t, R.T).T @ np.diag((f0, f0, f_prime))
+def calc_true_F(R1, t1, R2, t2, f, f_prime, f0):
+    return (
+        np.diag((f0, f0, f))
+        @ np.cross(t2 - t1, (R2 @ R1.T).T, axisc=0)
+        @ np.diag((f0, f0, f_prime))
+    )
 
 
 def main():
-    np.random.seed(17)
+    np.random.seed(123)
 
     f_ = 1.0
     f_prime_ = 1.0
-    camera1 = Camera([0, 0, 0], [0, 0, 3], f_)
+    camera1 = Camera([1, 1, 0], [0, 0, 3], f_)
     camera2 = Camera([2, 2, 1.1], [0.5, 0, 3], f_prime_)
 
     # データ点の設定
@@ -67,8 +73,8 @@ def main():
     x2 = camera2.project_points(X, 1.0)
 
     # ノイズの追加
-    x1 += 0.01 * np.random.randn(*x1.shape)
-    x2 += 0.01 * np.random.randn(*x2.shape)
+    x1 += 0.005 * np.random.randn(*x1.shape)
+    x2 += 0.005 * np.random.randn(*x2.shape)
 
     # アウトライアの追加
     # x1 = np.vstack((x1, 0.5 * np.random.randn(20, 2)))
@@ -84,36 +90,40 @@ def main():
     print(f"number of outlier: {outliers.sum()}")
 
     # 基礎行列の計算
-    #F = calc_fundamental_matrix_8points_method(x1, x2, f0, normalize=True, optimal=True)
-    # F = calc_fundamental_matrix_taubin_method(x1, x2, f0)
-    F = calc_fundamental_matrix_extended_fns_method(x1, x2, f0)
-    F_ = calc_true_F(R2, t2, f_, f_prime_, f0)
-    print(f"|F_ - F|={np.linalg.norm(F_ - F)}")
+    F1 = calc_fundamental_matrix_8points_method(x1, x2, f0, normalize=True, optimal=True)
+    F2 = calc_fundamental_matrix_taubin_method(x1, x2, f0)
+    F3 = calc_fundamental_matrix_extended_fns_method(x1, x2, f0)
+    F4 = find_fundamental_matrix_cv(x1, x2)
+    F_ = calc_true_F(R1, t1, R2, t2, f_, f_prime_, f0)
+    F = F3
+    print("8points:", F1)
+    print("taubin:", (F1[0, 0] / F2[0, 0]) * F2)
+    print("ext_fns:", (F1[0, 0] / F3[0, 0]) * F3)
+    print("opencv:", (F1[0, 0] / F4[0, 0]) * F4)
+    print("trueF:", (F1[0, 0] / F_[0, 0]) * F_)
+    # print(f"|F_ - F|=\n{np.linalg.norm(F_ - F)}")
 
     # 対応点の最適補正
-    #x1, x2 = optimize_corresponding_points(F, x1, x2, f0)
+    x1, x2 = optimize_corresponding_points(F, x1, x2, f0)
 
     # エピポールの計算
     epipole = calc_epipole(F)
     print(f"e1={epipole[0]}, e2={epipole[1]}")
 
     # 焦点距離f, f_primeの計算
-    f, f_prime = calc_free_focal_length(F, f0, verbose=True)
+    f, f_prime = calc_free_focal_length(F, f0, verbose=False)
     # f = f_prime = calc_fixed_focal_length(F, f0)
     # f, f_prime = f_, f_prime_
     print(f"f={f}, f_prime={f_prime}")
 
     # 運動パラメータの計算
     R, t = calc_motion_parameters(F, x1, x2, f, f_prime, f0)
-    # R, t = R2, t2
-    print(f"R={R}, t={t}")
-
-    # 対応点の補正
-    # X1_, X2_ = optimize_matches(X1, X2, F)
+    # R, t = R2 @ R1.T, t2 - t1
+    print(f"R=\n{R}, \nt=\n{t}")
 
     # カメラ行列の取得
     P, P_prime = calc_camera_matrix(f, f_prime, R, t, f0)
-    print(f"P={P}, P_prime={P_prime}")
+    print(f"P=\n{P}, \nP_prime=\n{P_prime}")
 
     # 3次元復元
     X_ = reconstruct_3d_points(x1, x2, P, P_prime, f0)
@@ -121,8 +131,8 @@ def main():
     # 3次元点の表示
     ax = init_3d_ax()
     plot_3d_points(X, ax)
-    plot_3d_basis(t1, R1.T, ax)
-    plot_3d_basis(t2, R2.T, ax)
+    plot_3d_basis(R1, t1, ax, label="Camera1")
+    plot_3d_basis(R2, t2, ax, label="Camera2")
     # 3次元データ点の表示
     plt.show()
     plt.clf()
@@ -149,12 +159,10 @@ def main():
     plt.show()
 
     # 復元したデータ点の表示
-    # print(X_)
     ax = init_3d_ax()
     plot_3d_points(X_, ax)
-    plot_3d_basis(t, R.T, ax)
-    # plot_3d_basis(t2, R2, ax)
-    # plot_3d_basis(t1, R1, ax)
+    plot_3d_basis(R, t, ax, label="pred")
+    plot_3d_basis(R2 @ R1.T, unit_vec(t2 - t1), ax, label="GT")
     plt.show()
 
 
