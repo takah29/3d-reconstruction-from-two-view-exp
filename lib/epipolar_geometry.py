@@ -84,7 +84,7 @@ def calc_free_focal_length(F, f0, verbose=False):
     S, P = np.linalg.eig(FtF)
     e_prime = P[:, np.argmin(S)]
 
-    k = np.array([[0.0], [0.0], [1.0]])
+    k = np.array([0.0, 0.0, 1.0])
 
     Fk = F @ k
     Ftk = F.T @ k
@@ -92,11 +92,14 @@ def calc_free_focal_length(F, f0, verbose=False):
     Fk_norm2 = np.linalg.norm(Fk) ** 2
     Ftk_norm2 = np.linalg.norm(Ftk) ** 2
 
-    e_cross_k_norm2 = np.linalg.norm(np.cross(e, k.T)) ** 2
-    e_prime_cross_k_norm2 = np.linalg.norm(np.cross(e_prime, k.T)) ** 2
+    k_dot_Fk = k @ Fk
+    k_dot_FFtFk = k @ (FFt @ Fk)
 
-    k_dot_Fk = (k.T @ Fk)[0][0]
-    k_dot_FFtFk = (k.T @ (FFt @ Fk))[0][0]
+    if np.abs(k_dot_Fk) < 0.1 * np.sqrt(np.min(Fk_norm2, Ftk_norm2)) / f0:
+        raise ValueError("Optical axes are crossed.")
+
+    e_cross_k_norm2 = np.linalg.norm(np.cross(e, k)) ** 2
+    e_prime_cross_k_norm2 = np.linalg.norm(np.cross(e_prime, k)) ** 2
 
     xi = (Fk_norm2 - (k_dot_FFtFk * e_prime_cross_k_norm2 / k_dot_Fk)) / (
         e_prime_cross_k_norm2 * Ftk_norm2 - k_dot_Fk**2
