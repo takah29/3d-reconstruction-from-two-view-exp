@@ -32,6 +32,5 @@ class Camera:
 
     def project_points(self, X, f0):
         X_ext = np.hstack((X, np.ones((X.shape[0], 1))))
-        # print(self.get_camera_matrix(f0))
         Xproj = X_ext @ self.get_camera_matrix(f0).T
         return Xproj[:, :2] / Xproj[:, -1:]
