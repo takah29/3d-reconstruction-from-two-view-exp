@@ -19,12 +19,14 @@ def init_3d_ax():
     return ax
 
 
-def plot_3d_basis(pos: NDArray, basis: NDArray, ax, label=None) -> None:
+def plot_3d_basis(basis: NDArray, pos: NDArray, ax, label=None) -> None:
     """
     基底をプロットする。回転行列のプロットにも使用できる。
     """
     assert pos.shape == (3,)
     assert basis.shape == (3, 3)
+
+    basis = basis.T
 
     cols = ["r", "g", "b", "r", "r", "g", "g", "b", "b"]
     _ = ax.quiver(
