@@ -9,6 +9,7 @@ from lib.epipolar_geometry import (
     calc_free_focal_length,
     calc_motion_parameters,
     reconstruct_3d_points,
+    detect_mirror,
 )
 from lib.fundamental_matrix import (
     calc_fundamental_matrix_8points_method,
@@ -127,6 +128,11 @@ def main():
 
     # 3次元復元
     X_ = reconstruct_3d_points(x1, x2, P, P_prime, f0)
+
+    # 鏡像の場合符号を反転して修正する
+    if detect_mirror(X_):
+        X_ *= -1
+        t *= -1
 
     # 3次元点の表示
     ax = init_3d_ax()

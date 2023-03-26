@@ -10,6 +10,7 @@ from lib.epipolar_geometry import (
     convert_image_coord_to_screen_coord,
     detect_corresponding_points,
     reconstruct_3d_points,
+    detect_mirror,
 )
 from lib.fundamental_matrix import (
     calc_fundamental_matrix_8points_method,
@@ -59,6 +60,11 @@ def main():
 
     # 3次元復元
     X_ = reconstruct_3d_points(x1, x2, P, P_prime, f0)
+
+    # 鏡像の場合符号を反転して修正する
+    if detect_mirror(X_):
+        X_ *= -1
+        t *= -1
 
     ax = init_3d_ax()
     plot_3d_points(X_, ax, "blue")

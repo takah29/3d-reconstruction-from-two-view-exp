@@ -220,3 +220,8 @@ def reconstruct_3d_points(x1, x2, P, P_prime, f0):
     X_ = -np.linalg.pinv(T) @ p
 
     return X_[:, :, 0]
+
+
+def detect_mirror(X):
+    """復元後カメラの後ろに像がある（鏡像）を検知する"""
+    return np.sum(np.sign(X[:, 2])) <= 0
