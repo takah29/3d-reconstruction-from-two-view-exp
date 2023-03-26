@@ -37,9 +37,9 @@ def main():
     f0 = max(img1.shape)
 
     # アウトライアの除去
-    print(x1.shape)
+    print(f"remove outliers: {x1.shape[0]} -> ", end="")
     x1, x2, _ = remove_outliers(x1, x2, f0, 2)
-    print(x1.shape)
+    print(x1.shape[0])
 
     # 基礎行列Fの計算
     # F = calc_fundamental_matrix_8points_method(x1, x2, f0, normalize=True, optimal=True)
