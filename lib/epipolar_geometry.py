@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+import matplotlib.pyplot as plt
 
 
 EPS = 1e-8
@@ -23,7 +24,7 @@ def get_keypoint_matrix(key_point1, query_indices, key_point2, train_indices):
     return X1, X2
 
 
-def detect_corresponding_points(img1, img2):
+def detect_corresponding_points(img1, img2, is_show=False):
     """2つの画像から対応点を検出する"""
     detector = cv2.AKAZE_create()
 
@@ -42,21 +43,24 @@ def detect_corresponding_points(img1, img2):
 
     good_matches = sorted(good_matches, key=lambda x: x[0].distance)
 
-    img3 = cv2.drawMatchesKnn(
-        img1,
-        key_point1,
-        img2,
-        key_point2,
-        good_matches,
-        None,
-        flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS,
-    )
+    # 対応点の表示
+    if is_show:
+        img3 = cv2.drawMatchesKnn(
+            img1,
+            key_point1,
+            img2,
+            key_point2,
+            good_matches,
+            None,
+            flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS,
+        )
 
-    cv2.imshow("image", img3)
-    cv2.waitKey()
+        plt.figure(figsize=(16, 6))
+        plt.imshow(img3[:, :, (2, 1, 0)])
+        plt.tight_layout()
+        plt.show()
 
     query_indices, train_indices = get_corresponding_indices(good_matches)
-
     X1, X2 = get_keypoint_matrix(key_point1, query_indices, key_point2, train_indices)
 
     return X1, X2
