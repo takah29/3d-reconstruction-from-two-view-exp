@@ -34,7 +34,7 @@ def detect_corresponding_points(img1, img2):
 
     matches = bf_matcher.knnMatch(descript1, descript2, k=2)
 
-    ratio = 0.7
+    ratio = 0.6
     good_matches = []
     for m, n in matches:
         if m.distance < ratio * n.distance:
@@ -67,7 +67,7 @@ def calc_epipole(F):
     e1 = U.T[-1]
     e2 = Vt[-1]
 
-    return np.vstack((e1 / e1[2], e2 / e2[2]))[:, :2]
+    return np.vstack((e1 / e1[2], e2 / e2[2]))
 
 
 def calc_free_focal_length(F, f0, verbose=False):
@@ -181,7 +181,7 @@ def calc_motion_parameters(F, x1, x2, f, f_prime, f0):
         [np.linalg.det(np.vstack((t, x, y))) for x, y in zip(x1_ext, x2_ext_E)]
     )
     if scalar_triple_product_sum <= 0.0:
-        t = -t
+        t *= -1
 
     K = -np.cross(t, E.T, axisc=0)
     U, _, Vt = np.linalg.svd(K)
