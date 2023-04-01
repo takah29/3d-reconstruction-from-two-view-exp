@@ -9,7 +9,7 @@ from lib.epipolar_geometry import (
     calc_free_focal_length,
     calc_motion_parameters,
     reconstruct_3d_points,
-    detect_mirror,
+    detect_mirror_image,
 )
 from lib.fundamental_matrix import (
     calc_fundamental_matrix_8points_method,
@@ -130,7 +130,7 @@ def main():
     X_ = reconstruct_3d_points(x1, x2, P, P_prime, f0)
 
     # 鏡像の場合符号を反転して修正する
-    if detect_mirror(X_):
+    if detect_mirror_image(X_):
         X_ *= -1
         t *= -1
 
