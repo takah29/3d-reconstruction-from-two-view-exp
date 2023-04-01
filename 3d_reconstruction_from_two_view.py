@@ -24,8 +24,8 @@ from lib.visualization import init_3d_ax, plot_3d_basis, plot_3d_points
 
 def main():
     # 画像ファイル読み込み
-    img1 = cv2.imread("./images/001.jpg")
-    img2 = cv2.imread("./images/002.jpg")
+    img1 = cv2.imread("./images/merton_college_I/001.jpg")
+    img2 = cv2.imread("./images/merton_college_I/002.jpg")
 
     # 対応点の検出
     x1, x2 = detect_corresponding_points(img1, img2, is_show=True)
