@@ -4,7 +4,7 @@ from numpy.typing import NDArray
 
 def init_3d_ax():
     """Zを奥行きとした右手系座標を設定する"""
-    plt.figure(figsize=(16, 16))
+    plt.figure(figsize=(10, 10))
     ax = plt.axes(projection="3d")
 
     ax.set_xlim3d([-5.0, 5.0])
