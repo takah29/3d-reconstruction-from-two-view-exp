@@ -26,7 +26,7 @@ from lib.utils import unit_vec
 def set_points():
     points = []
     for x in np.linspace(-1, 1, 10):
-        for theta in np.linspace(-np.pi / 2, 0.0, 10):
+        for theta in np.linspace(-np.pi / 2, np.pi / 2, 20):
             r = 1 / (x + 2)
             y, z = r * np.cos(theta), r * np.sin(theta)
             points.append((x, y, z + 3))
@@ -108,7 +108,7 @@ def main():
     x1, x2 = optimize_corresponding_points(F, x1, x2, f0)
 
     # エピポールの計算
-    epipole = calc_epipole(F)
+    epipole = calc_epipole(F)[:, :2]
     print(f"e1={epipole[0]}, e2={epipole[1]}")
 
     # 焦点距離f, f_primeの計算
@@ -119,7 +119,7 @@ def main():
 
     # 運動パラメータの計算
     R, t = calc_motion_parameters(F, x1, x2, f, f_prime, f0)
-    # R, t = R2 @ R1.T, t2 - t1
+    # R, t = R2 @ R1.T, unit_vec(t2 - t1)
     print(f"R=\n{R}, \nt=\n{t}")
 
     # カメラ行列の取得
