@@ -23,6 +23,8 @@ from lib.visualization import init_3d_ax, plot_3d_basis, plot_3d_points
 
 
 def main():
+    np.random.seed(123)
+
     # 画像ファイル読み込み
     img1 = cv2.imread("./images/merton_college_I/001.jpg")
     img2 = cv2.imread("./images/merton_college_I/002.jpg")
