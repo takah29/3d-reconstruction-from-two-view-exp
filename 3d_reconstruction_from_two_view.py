@@ -30,7 +30,7 @@ def main():
     img2 = cv2.imread("./images/merton_college_I/002.jpg")
 
     # 対応点の検出
-    x1, x2 = detect_corresponding_points(img1, img2, is_show=True)
+    x1, x2 = detect_corresponding_points(img1, img2, method="AKAZE", is_show=True)
 
     # 画像座標をスクリーン座標へ変換
     x1 = convert_image_coord_to_screen_coord(x1)
