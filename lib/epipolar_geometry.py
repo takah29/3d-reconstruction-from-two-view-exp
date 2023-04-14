@@ -10,58 +10,6 @@ def convert_image_coord_to_screen_coord(points):
     return np.hstack((-points[:, -1:], points[:, :1]))
 
 
-def get_corresponding_indices(matches, method="AKAZE"):
-    if method == "AKAZE":
-        query_indices = [x[0].queryIdx for x in matches]
-        train_indices = [x[0].trainIdx for x in matches]
-    elif method == "SIFT":
-        query_indices = [x.queryIdx for x in matches]
-        train_indices = [x.trainIdx for x in matches]
-    else:
-        raise NotImplementedError()
-
-    return query_indices, train_indices
-
-
-def get_keypoint_matrix(key_point1, query_indices, key_point2, train_indices):
-    X1 = np.vstack([key_point1[i].pt for i in query_indices])
-    X2 = np.vstack([key_point2[i].pt for i in train_indices])
-
-    return X1, X2
-
-
-def _detect_matches(img1, img2, method):
-    if method == "AKAZE":
-        detector = cv2.AKAZE_create()
-    elif method == "SIFT":
-        detector = cv2.SIFT_create()
-    else:
-        raise NotImplementedError()
-
-    key_point1, descript1 = detector.detectAndCompute(img1, None)
-    key_point2, descript2 = detector.detectAndCompute(img2, None)
-
-    if method == "AKAZE":
-        bf_matcher = cv2.BFMatcher(cv2.NORM_HAMMING)
-        matches = bf_matcher.knnMatch(descript1, descript2, k=2)
-
-        ratio = 0.6
-        good_matches = []
-        for m, n in matches:
-            if m.distance < ratio * n.distance:
-                good_matches.append([m])
-
-        matches = sorted(good_matches, key=lambda x: x[0].distance)
-
-    elif method == "SIFT":
-        ratio = 0.2
-        bf_matcher = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
-        matches = bf_matcher.match(descript1, descript2)
-        matches = sorted(matches, key=lambda x: x.distance)[: int(ratio * len(matches))]
-
-    return key_point1, key_point2, matches
-
-
 def detect_corresponding_points(img1, img2, method="AKAZE", is_show=False):
     """2つの画像から対応点を検出する"""
 
@@ -85,8 +33,8 @@ def detect_corresponding_points(img1, img2, method="AKAZE", is_show=False):
         plt.tight_layout()
         plt.show()
 
-    query_indices, train_indices = get_corresponding_indices(matches, method)
-    X1, X2 = get_keypoint_matrix(key_point1, query_indices, key_point2, train_indices)
+    query_indices, train_indices = _get_corresponding_indices(matches, method)
+    X1, X2 = _get_keypoint_matrix(key_point1, query_indices, key_point2, train_indices)
 
     return X1, X2
 
@@ -254,3 +202,55 @@ def reconstruct_3d_points(x1, x2, P, P_prime, f0):
 def detect_mirror_image(X):
     """復元後カメラの後ろに像がある（鏡像）を検知する"""
     return np.sum(np.sign(X[:, 2])) <= 0
+
+
+def _get_corresponding_indices(matches, method="AKAZE"):
+    if method == "AKAZE":
+        query_indices = [x[0].queryIdx for x in matches]
+        train_indices = [x[0].trainIdx for x in matches]
+    elif method == "SIFT":
+        query_indices = [x.queryIdx for x in matches]
+        train_indices = [x.trainIdx for x in matches]
+    else:
+        raise NotImplementedError()
+
+    return query_indices, train_indices
+
+
+def _get_keypoint_matrix(key_point1, query_indices, key_point2, train_indices):
+    X1 = np.vstack([key_point1[i].pt for i in query_indices])
+    X2 = np.vstack([key_point2[i].pt for i in train_indices])
+
+    return X1, X2
+
+
+def _detect_matches(img1, img2, method):
+    if method == "AKAZE":
+        detector = cv2.AKAZE_create()
+    elif method == "SIFT":
+        detector = cv2.SIFT_create()
+    else:
+        raise NotImplementedError()
+
+    key_point1, descript1 = detector.detectAndCompute(img1, None)
+    key_point2, descript2 = detector.detectAndCompute(img2, None)
+
+    if method == "AKAZE":
+        bf_matcher = cv2.BFMatcher(cv2.NORM_HAMMING)
+        matches = bf_matcher.knnMatch(descript1, descript2, k=2)
+
+        ratio = 0.6
+        good_matches = []
+        for m, n in matches:
+            if m.distance < ratio * n.distance:
+                good_matches.append([m])
+
+        matches = sorted(good_matches, key=lambda x: x[0].distance)
+
+    elif method == "SIFT":
+        ratio = 0.2
+        bf_matcher = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
+        matches = bf_matcher.match(descript1, descript2)
+        matches = sorted(matches, key=lambda x: x.distance)[: int(ratio * len(matches))]
+
+    return key_point1, key_point2, matches
