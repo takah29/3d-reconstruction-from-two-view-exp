@@ -10,9 +10,15 @@ def convert_image_coord_to_screen_coord(points):
     return np.hstack((-points[:, -1:], points[:, :1]))
 
 
-def get_corresponding_indices(matches):
-    query_indices = [x[0].queryIdx for x in matches]
-    train_indices = [x[0].trainIdx for x in matches]
+def get_corresponding_indices(matches, method="AKAZE"):
+    if method == "AKAZE":
+        query_indices = [x[0].queryIdx for x in matches]
+        train_indices = [x[0].trainIdx for x in matches]
+    elif method == "SIFT":
+        query_indices = [x.queryIdx for x in matches]
+        train_indices = [x.trainIdx for x in matches]
+    else:
+        raise NotImplementedError()
 
     return query_indices, train_indices
 
@@ -24,33 +30,52 @@ def get_keypoint_matrix(key_point1, query_indices, key_point2, train_indices):
     return X1, X2
 
 
-def detect_corresponding_points(img1, img2, is_show=False):
-    """2つの画像から対応点を検出する"""
-    detector = cv2.AKAZE_create()
+def _detect_matches(img1, img2, method):
+    if method == "AKAZE":
+        detector = cv2.AKAZE_create()
+    elif method == "SIFT":
+        detector = cv2.SIFT_create()
+    else:
+        raise NotImplementedError()
 
     key_point1, descript1 = detector.detectAndCompute(img1, None)
     key_point2, descript2 = detector.detectAndCompute(img2, None)
 
-    bf_matcher = cv2.BFMatcher(cv2.NORM_HAMMING)
+    if method == "AKAZE":
+        bf_matcher = cv2.BFMatcher(cv2.NORM_HAMMING)
+        matches = bf_matcher.knnMatch(descript1, descript2, k=2)
 
-    matches = bf_matcher.knnMatch(descript1, descript2, k=2)
+        ratio = 0.6
+        good_matches = []
+        for m, n in matches:
+            if m.distance < ratio * n.distance:
+                good_matches.append([m])
 
-    ratio = 0.6
-    good_matches = []
-    for m, n in matches:
-        if m.distance < ratio * n.distance:
-            good_matches.append([m])
+        matches = sorted(good_matches, key=lambda x: x[0].distance)
 
-    good_matches = sorted(good_matches, key=lambda x: x[0].distance)
+    elif method == "SIFT":
+        ratio = 0.2
+        bf_matcher = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
+        matches = bf_matcher.match(descript1, descript2)
+        matches = sorted(matches, key=lambda x: x.distance)[: int(ratio * len(matches))]
+
+    return key_point1, key_point2, matches
+
+
+def detect_corresponding_points(img1, img2, method="AKAZE", is_show=False):
+    """2つの画像から対応点を検出する"""
+
+    key_point1, key_point2, matches = _detect_matches(img1, img2, method)
 
     # 対応点の表示
     if is_show:
-        img3 = cv2.drawMatchesKnn(
+        draw_matches = cv2.drawMatchesKnn if method == "AKAZE" else cv2.drawMatches
+        img3 = draw_matches(
             img1,
             key_point1,
             img2,
             key_point2,
-            good_matches,
+            matches,
             None,
             flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS,
         )
@@ -60,7 +85,7 @@ def detect_corresponding_points(img1, img2, is_show=False):
         plt.tight_layout()
         plt.show()
 
-    query_indices, train_indices = get_corresponding_indices(good_matches)
+    query_indices, train_indices = get_corresponding_indices(matches, method)
     X1, X2 = get_keypoint_matrix(key_point1, query_indices, key_point2, train_indices)
 
     return X1, X2
