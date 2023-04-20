@@ -6,8 +6,8 @@ import matplotlib.pyplot as plt
 EPS = 1e-8
 
 
-def convert_image_coord_to_screen_coord(points):
-    return np.hstack((-points[:, -1:], points[:, :1]))
+def convert_image_coord_to_screen_coord(points, width, height):
+    return np.hstack((-points[:, -1:] + height / 2, points[:, :1] - width / 2))
 
 
 def detect_corresponding_points(img1, img2, method="AKAZE", is_show=False):

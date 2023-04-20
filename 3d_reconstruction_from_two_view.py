@@ -19,7 +19,7 @@ from lib.fundamental_matrix import (
     optimize_corresponding_points,
     remove_outliers,
 )
-from lib.visualization import init_3d_ax, plot_3d_basis, plot_3d_points
+from lib.visualization import init_3d_ax, plot_3d_basis, plot_3d_points, plot_2d_points
 
 
 def main():
@@ -33,8 +33,8 @@ def main():
     x1, x2 = detect_corresponding_points(img1, img2, method="AKAZE", is_show=True)
 
     # 画像座標をスクリーン座標へ変換
-    x1 = convert_image_coord_to_screen_coord(x1)
-    x2 = convert_image_coord_to_screen_coord(x2)
+    x1 = convert_image_coord_to_screen_coord(x1, img1.shape[1], img1.shape[0])
+    x2 = convert_image_coord_to_screen_coord(x2, img2.shape[1], img2.shape[0])
 
     f0 = max(img1.shape)
 
@@ -68,6 +68,25 @@ def main():
         X_ *= -1
         t *= -1
 
+    # 2次元に射影したデータ点の表示
+    # camera1で射影した2次元データ点のプロット
+    plt.figure(figsize=(12, 6))
+    ax1 = plt.subplot(1, 2, 1)
+    ax1.set_xlim(-f0 / 2, f0 / 2)
+    ax1.set_ylim(-f0 / 2, f0 / 2)
+    plt.grid()
+    plot_2d_points(x1, ax1, color="black")
+
+    # camera2で射影した2次元データ点のプロット
+    ax2 = plt.subplot(1, 2, 2)
+    ax2.set_xlim(-f0 / 2, f0 / 2)
+    ax2.set_ylim(-f0 / 2, f0 / 2)
+    plt.grid()
+    plot_2d_points(x2, ax2, color="black")
+
+    plt.show()
+
+    # 復元したデータ点の表示
     ax = init_3d_ax()
     plot_3d_points(X_, ax, "blue")
     plot_3d_basis(np.eye(3), np.zeros(3), ax, label="Camera1")
