@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 
 from lib.epipolar_geometry import (
     calc_camera_matrix,
-    calc_fixed_focal_length,
     calc_free_focal_length,
     calc_motion_parameters,
     convert_image_coord_to_screen_coord,
@@ -13,9 +12,7 @@ from lib.epipolar_geometry import (
     detect_mirror_image,
 )
 from lib.fundamental_matrix import (
-    calc_fundamental_matrix_8points_method,
     calc_fundamental_matrix_extended_fns_method,
-    find_fundamental_matrix_cv,
     optimize_corresponding_points,
     remove_outliers,
 )
@@ -30,7 +27,7 @@ def main():
     img2 = cv2.imread("./images/merton_college_I/002.jpg")
 
     # 対応点の検出
-    x1, x2 = detect_corresponding_points(img1, img2, method="AKAZE", is_show=True)
+    x1, x2, colors = detect_corresponding_points(img1, img2, method="AKAZE", is_show=True)
 
     # 画像座標をスクリーン座標へ変換
     x1 = convert_image_coord_to_screen_coord(x1, img1.shape[1], img1.shape[0])
@@ -40,13 +37,12 @@ def main():
 
     # アウトライアの除去
     print(f"remove outliers: {x1.shape[0]} -> ", end="")
-    x1, x2, _ = remove_outliers(x1, x2, f0, 2)
+    x1, x2, not_satisfied = remove_outliers(x1, x2, f0, 2)
+    colors = colors[~not_satisfied]
     print(x1.shape[0])
 
     # 基礎行列Fの計算
-    # F = calc_fundamental_matrix_8points_method(x1, x2, f0, normalize=True, optimal=True)
     F = calc_fundamental_matrix_extended_fns_method(x1, x2, f0)
-    # F = find_fundamental_matrix_cv(x1, x2)
 
     # 対応点の補正
     x1, x2 = optimize_corresponding_points(F, x1, x2, f0)
@@ -75,20 +71,20 @@ def main():
     ax1.set_xlim(-f0 / 2, f0 / 2)
     ax1.set_ylim(-f0 / 2, f0 / 2)
     plt.grid()
-    plot_2d_points(x1, ax1, color="black")
+    plot_2d_points(x1, ax1, color=colors)
 
     # camera2で射影した2次元データ点のプロット
     ax2 = plt.subplot(1, 2, 2)
     ax2.set_xlim(-f0 / 2, f0 / 2)
     ax2.set_ylim(-f0 / 2, f0 / 2)
     plt.grid()
-    plot_2d_points(x2, ax2, color="black")
+    plot_2d_points(x2, ax2, color=colors)
 
     plt.show()
 
     # 復元したデータ点の表示
     ax = init_3d_ax()
-    plot_3d_points(X_, ax, "blue")
+    plot_3d_points(X_, ax, color=colors)
     plot_3d_basis(np.eye(3), np.zeros(3), ax, label="Camera1")
     plot_3d_basis(R, t, ax, label="Camera2")
 

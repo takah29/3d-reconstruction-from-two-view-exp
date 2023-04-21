@@ -38,11 +38,13 @@ def plot_3d_basis(basis: NDArray, pos: NDArray, ax, label=None) -> None:
 
 
 def plot_3d_points(X: NDArray, ax, color="black") -> None:
-    ax.scatter(X[:, 1], X[:, 2], X[:, 0], c=color, marker=".")
+    """3次元点群をプロットする、colorはリストで与えても良い"""
+    ax.scatter(X[:, 1], X[:, 2], X[:, 0], c=color, marker="o")
 
 
 def plot_2d_points(x, ax, color="black") -> None:
-    ax.scatter(x[:, 1], x[:, 0], c=color, marker=".")
+    """2次元点群をプロットする、colorはリストで与えても良い"""
+    ax.scatter(x[:, 1], x[:, 0], c=color, marker="o")
 
 
 def subplot_2d_points(x1, x2, color="black"):

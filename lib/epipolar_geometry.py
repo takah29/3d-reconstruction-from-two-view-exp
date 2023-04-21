@@ -10,6 +10,13 @@ def convert_image_coord_to_screen_coord(points, width, height):
     return np.hstack((-points[:, -1:] + height / 2, points[:, :1] - width / 2))
 
 
+def _get_color_from_img(points, img):
+    idx = points.astype(np.int32)
+    colors = img[idx[:, 1], idx[:, 0]]
+
+    return colors
+
+
 def detect_corresponding_points(img1, img2, method="AKAZE", is_show=False):
     """2つの画像から対応点を検出する"""
 
@@ -34,9 +41,12 @@ def detect_corresponding_points(img1, img2, method="AKAZE", is_show=False):
         plt.show()
 
     query_indices, train_indices = _get_corresponding_indices(matches, method)
-    X1, X2 = _get_keypoint_matrix(key_point1, query_indices, key_point2, train_indices)
+    x1, x2 = _get_keypoint_matrix(key_point1, query_indices, key_point2, train_indices)
 
-    return X1, X2
+    colors = _get_color_from_img(x1, img1) / 255
+    colors = colors[..., (2, 1, 0)]  # OpenCVはBGR形式なので、RGB形式へ変換する
+
+    return x1, x2, colors
 
 
 def calc_epipole(F):
