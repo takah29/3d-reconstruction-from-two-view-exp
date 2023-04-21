@@ -18,12 +18,12 @@ pipenv run python 3d_reconstruction_from_two_view.py
 
 ### Merton College I
 
-![corresponding_points]("./../asset/corresponding_points1.png)
+![corresponding_points]("./../asset/corresponding_points1.jpg)
 ![reconstruction]("./../asset/reconstruction1.png)
 
 ### Merton College III
 
-![corresponding_points]("./../asset/corresponding_points2.png)
+![corresponding_points]("./../asset/corresponding_points2.jpg)
 ![reconstruction]("./../asset/reconstruction2.png)
 
 ## Reference
