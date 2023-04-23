@@ -1,14 +1,13 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from lib.conversion import get_rotation_axis_and_angle, get_rotation_matrix
+from lib.conversion import get_rotation_matrix
 from lib.prediction import (
     correct_rotation_matrix,
     is_optimized_rotation_matrix,
     predict_motion,
-    predict_motion_no_error,
 )
-from lib.utils import add_noise, sample_normal_dist, unit_vec
+from lib.utils import add_noise, sample_normal_dist
 from lib.visualization import init_3d_ax, plot_3d_basis, plot_3d_points
 
 np.random.seed(2)
@@ -31,7 +30,7 @@ def main():
     X2 = add_noise(X2, 0.1)
 
     # 回転R_と並進t_を推定
-    R2_, t2_ = predict_motion_no_error(X1, X2)
+    R2_, t2_ = predict_motion(X1, X2)
 
     # 回転R_の最適補正
     if not is_optimized_rotation_matrix(R2_):
