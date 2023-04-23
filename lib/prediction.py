@@ -16,18 +16,17 @@ def predict_motion_no_error(X: NDArray, Y: NDArray) -> tuple[NDArray, NDArray]:
     r1 = unit_vec(A[0])
     r2 = unit_vec(np.cross(A[0], A[1]))
     r3 = unit_vec(np.cross(A[0], np.cross(A[0], A[1])))
-    R1 = np.vstack((r1, r2, r3))
+    R1 = np.vstack((r1, r2, r3)).T
 
     B = Y - yc
     r1_ = unit_vec(B[0])
     r2_ = unit_vec(np.cross(B[0], B[1]))
     r3_ = unit_vec(np.cross(B[0], np.cross(B[0], B[1])))
+    R2 = np.vstack((r1_, r2_, r3_)).T
 
-    R2 = np.vstack((r1_, r2_, r3_))
+    R = R2 @ R1.T
 
-    R = R1.T @ R2
-
-    return t, R
+    return R, t
 
 
 def predict_motion(X: NDArray, Y: NDArray) -> tuple[NDArray, NDArray]:
@@ -39,11 +38,11 @@ def predict_motion(X: NDArray, Y: NDArray) -> tuple[NDArray, NDArray]:
     A = X - xc
     B = Y - yc
 
-    N = B.T @ A
+    N = A.T @ B
     U, S, Vt = np.linalg.svd(N)
     R = Vt.T @ np.diag([1, 1, np.linalg.det(Vt.T @ U)]) @ U.T
 
-    return t, R
+    return R, t
 
 
 def is_optimized_rotation_matrix(R: NDArray) -> bool:
