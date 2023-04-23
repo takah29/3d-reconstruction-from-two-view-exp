@@ -15,19 +15,18 @@ def get_rotation_matrix(l_: NDArray, omega: float) -> NDArray:
     R4 = np.array([[1, -l_[2], l_[1]], [l_[2], 1, -l_[0]], [-l_[1], l_[0], 1]])
     R = R1 * R2 + R3 * R4
 
-    return R.T  # 横ベクトル向けに転置する
+    return R
 
 
 def get_rotation_axis_and_angle(R: NDArray) -> tuple[NDArray, float]:
     """回転行列から回転軸l_と回転角omegaを求める"""
     assert R.shape == (3, 3)
 
-    R = R.T  # 横ベクトル向けに転置する
-    res_omega = np.arccos((np.trace(R) - 1) / 2)
+    omega = np.arccos((np.trace(R) - 1) / 2)
     tmp = np.array([R[1, 2] - R[2, 1], R[2, 0] - R[0, 2], R[0, 1] - R[1, 0]])
-    res_l = -unit_vec(tmp)
+    l_ = -unit_vec(tmp)
 
-    return res_l, res_omega
+    return l_, omega
 
 
 def wedge(x: NDArray) -> NDArray:
