@@ -9,47 +9,48 @@ from lib.prediction import (
     predict_motion_no_error,
 )
 from lib.utils import add_noise, sample_normal_dist, unit_vec
-from lib.visualization import init_3d_ax, plot_basis, plot_points
+from lib.visualization import init_3d_ax, plot_3d_basis, plot_3d_points
 
 np.random.seed(2)
 
 
 def main():
+    # データ点Xの作成
+    X = sample_normal_dist(1.0, 10)
+    X = X - X.mean(axis=0)
+
+    # データ点X1の作成
+    R1 = get_rotation_matrix(np.array([0, 1, 0]), 1)
+    t1 = np.array([1, 0, 0])
+    X1 = X @ R1.T + t1
+
+    # データ点X2の作成
+    R2 = get_rotation_matrix(np.array([0, 0, 1]), 1)
+    t2 = np.array([1, 0, 0])
+    X2 = X @ (R1.T @ R2.T) + (t1 + t2)
+    X2 = add_noise(X2, 0.1)
+
+    # 回転R_と並進t_を推定
+    R2_, t2_ = predict_motion_no_error(X1, X2)
+
+    # 回転R_の最適補正
+    if not is_optimized_rotation_matrix(R2_):
+        print("A_ is not a rotation matrix, so it is corrected")
+        R2_ = correct_rotation_matrix(R2_)
+
+    # 推定したR_とt_でX1を変換したYを作成
+    X2_ = X @ (R1.T @ R2_.T) + (t1 + t2_)
+
+    # プロット
     ax = init_3d_ax()
 
-    t = np.array([0, 0, 2])
-    A = get_rotation_matrix(np.array([1, 0, 0]), 1)
-    X = sample_normal_dist(1.0, 10)
+    plot_3d_points(X1, ax, "blue")
+    plot_3d_points(X2, ax, "red")
+    plot_3d_points(X2_, ax, "green")
 
-    X_ = X - X.mean(axis=0)
-    r1 = unit_vec(X_[0])
-    r2 = unit_vec(np.cross(X_[0], X_[1]))
-    r3 = unit_vec(np.cross(X_[0], np.cross(X_[0], X_[1])))
-    R = np.vstack((r1, r2, r3))
-
-    Y = X_ @ A + (X.mean(axis=0) + t)
-    Y = add_noise(Y, 0.1)
-
-    plot_points(X, ax, "blue")
-    plot_points(Y, ax, "red")
-
-    t_, A_ = predict_motion(X, Y)
-    if not is_optimized_rotation_matrix(A_):
-        print("A_ is not a rotation matrix, so it is corrected")
-        A_ = correct_rotation_matrix(A_)
-
-    plot_basis(
-        X.mean(axis=0),
-        R,
-        ax,
-        "before",
-    )
-    plot_basis(X.mean(axis=0) + t_, R @ A_, ax, "after")
-
-    plot_points(X_ @ A_ + (X.mean(axis=0) + t_), ax, "green")
-
-    print(t, A, sep="\n")
-    print(t_, A_, sep="\n")
+    plot_3d_basis(R1, t1, ax, "X1-pose")
+    plot_3d_basis(R2 @ R1, t1 + t2, ax, "X2-pose")
+    plot_3d_basis(R2_ @ R1, t1 + t2_, ax, "X2_-pose")
 
     plt.show()
 
