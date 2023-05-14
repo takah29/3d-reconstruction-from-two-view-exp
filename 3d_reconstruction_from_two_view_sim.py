@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from lib.camera import Camera
+from lib.camera3 import Camera
 from lib.epipolar_geometry import (
     calc_camera_matrix,
     calc_epipole,
@@ -19,7 +19,7 @@ from lib.fundamental_matrix import (
     optimize_corresponding_points,
     remove_outliers,
 )
-from lib.visualization import init_3d_ax, plot_2d_points, plot_3d_basis, plot_3d_points
+from lib.visualization import ThreeDimensionalPlotter, TwoDimensionalMatrixPlotter
 from lib.utils import unit_vec
 
 
@@ -61,21 +61,22 @@ def calc_true_F(R1, t1, R2, t2, f, f_prime, f0):
 def main():
     np.random.seed(123)
 
+    f0 = 1.0
     f_ = 1.0
     f_prime_ = 1.0
-    camera1 = Camera([1, 1, 0], [0, 0, 3], f_)
-    camera2 = Camera([2, 2, 1.1], [0.5, 0, 3], f_prime_)
+    camera1 = Camera.create([1, 1, 0], [0, 0, 3], f_, f0)
+    camera2 = Camera.create([2, 2, 1.1], [0.5, 0, 3], f_prime_, f0)
 
     # データ点の設定
     X = set_points()
 
     # 2次元画像平面へ射影
-    x1 = camera1.project_points(X, 1.0)
-    x2 = camera2.project_points(X, 1.0)
+    x1 = camera1.project_points(X, method="perspective")
+    x2 = camera2.project_points(X, method="perspective")
 
     # ノイズの追加
-    x1 += 0.005 * np.random.randn(*x1.shape)
-    x2 += 0.005 * np.random.randn(*x2.shape)
+    # x1 += 0.01 * np.random.randn(*x1.shape)
+    # x2 += 0.01 * np.random.randn(*x2.shape)
 
     # アウトライアの追加
     # x1 = np.vstack((x1, 0.5 * np.random.randn(20, 2)))
@@ -83,8 +84,6 @@ def main():
 
     R1, t1 = camera1.get_pose()
     R2, t2 = camera2.get_pose()
-
-    f0 = 1.0
 
     # アウトライアの除去
     x1, x2, outliers = remove_outliers(x1, x2, f0, 0.05)
@@ -134,42 +133,44 @@ def main():
         X_ *= -1
         t *= -1
 
-    # 3次元点の表示
-    ax = init_3d_ax()
-    plot_3d_points(X, ax)
-    plot_3d_basis(R1, t1, ax, label="Camera1")
-    plot_3d_basis(R2, t2, ax, label="Camera2")
-    # 3次元データ点の表示
-    plt.show()
-    plt.clf()
+    # シーンデータの表示
+    plotter_3d = ThreeDimensionalPlotter(figsize=(10, 10))
+    plotter_3d.set_lim()
+    plotter_3d.plot_points(X)
+    for i, camera in enumerate([camera1, camera2], start=1):
+        plotter_3d.plot_basis(*camera.get_pose(), label=f"Camera{i}")
+    plotter_3d.show()
+    plotter_3d.close()
 
-    # 2次元に射影したデータ点の表示
-    # camera1で射影した2次元データ点のプロット
-    ax1 = plt.subplot(1, 2, 1)
-    ax1.set_xlim(-2, 2)
-    ax1.set_ylim(-2, 2)
-    plt.grid()
-    plot_2d_points(x1, ax1, color="black")
-    # エピポールのプロット
-    plot_2d_points(epipole[:1], ax1, color="green")
+    # 復元したシーンデータの表示
+    plotter_3d = ThreeDimensionalPlotter(figsize=(10, 10))
+    plotter_3d.set_lim()
+    plotter_3d.plot_points(X_)
+    plotter_3d.plot_basis(np.eye(3), np.zeros(3), label="Camera1")
+    plotter_3d.plot_basis(R, t, label="Camera2")
+    plotter_3d.show()
+    plotter_3d.close()
 
-    # camera2で射影した2次元データ点のプロット
-    ax2 = plt.subplot(1, 2, 2)
-    ax2.set_xlim(-2, 2)
-    ax2.set_ylim(-2, 2)
-    plt.grid()
-    plot_2d_points(x2, ax2, color="black")
-    # エピポールのプロット
-    plot_2d_points(epipole[-1:], ax2, color="green")
+    # 投影データと復元後の再投影データの表示
+    cameras_ = []
+    for R_pred, t_pred, f_pred in [(np.eye(3), np.zeros(3), f), (R, t, f_prime)]:
+        K_pred = np.diag([f_pred, f_pred, f0])
+        cameras_.append(Camera(R_pred, t_pred, K_pred))
 
-    plt.show()
+    x_list_ = []
+    for camera in cameras_:
+        x = camera.project_points(X_, method="perspective")
+        x_list_.append(x)
 
-    # 復元したデータ点の表示
-    ax = init_3d_ax()
-    plot_3d_points(X_, ax)
-    plot_3d_basis(R, t, ax, label="pred")
-    plot_3d_basis(R2 @ R1.T, unit_vec(t2 - t1), ax, label="GT")
-    plt.show()
+    plotter_2d = TwoDimensionalMatrixPlotter(1, 2, (10, 6))
+    for i, x in enumerate([x1, x2]):
+        plotter_2d.select(i)
+        plotter_2d.set_property(f"Camera{i + 1}", (-1, 1), (-1, 1))
+        plotter_2d.plot_points(x, color="green", label="Projection")
+        plotter_2d.plot_points(x_list_[i], color="red", label="Reprojection")
+
+    plotter_2d.show()
+    plotter_2d.close()
 
 
 if __name__ == "__main__":
