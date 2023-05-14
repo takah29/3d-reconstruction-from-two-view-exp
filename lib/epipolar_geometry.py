@@ -130,7 +130,7 @@ def calc_fixed_focal_length(F, f0):
 
     a1 = k_dot_Fk**4 / 2
     a2 = k_dot_Fk**2 * (Ftk_norm2 + Fk_norm2)
-    a3 = (Ftk_norm2 - Fk_norm2) ** 2 / 2 + k_dot_Fk * (4 * (k_dot_FFtFk - k_dot_Fk * F_norm2))
+    a3 = (Ftk_norm2 - Fk_norm2) ** 2 / 2 + k_dot_Fk * (4 * k_dot_FFtFk - k_dot_Fk * F_norm2)
     a4 = 2 * (FFtk_norm2 + FtFk_norm2) - (Ftk_norm2 + Fk_norm2) * F_norm2
     a5 = FFt_norm2 - F_norm2**2 / 2
 
