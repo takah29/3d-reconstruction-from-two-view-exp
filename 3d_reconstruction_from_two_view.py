@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
-import matplotlib.pyplot as plt
 
+from lib.camera import Camera
 from lib.epipolar_geometry import (
     calc_camera_matrix,
     calc_free_focal_length,
@@ -16,7 +16,7 @@ from lib.fundamental_matrix import (
     optimize_corresponding_points,
     remove_outliers,
 )
-from lib.visualization import init_3d_ax, plot_3d_basis, plot_3d_points, plot_2d_points
+from lib.visualization import ThreeDimensionalPlotter, TwoDimensionalMatrixPlotter
 
 
 def main():
@@ -64,31 +64,35 @@ def main():
         X_ *= -1
         t *= -1
 
-    # 2次元に射影したデータ点の表示
-    # camera1で射影した2次元データ点のプロット
-    plt.figure(figsize=(12, 6))
-    ax1 = plt.subplot(1, 2, 1)
-    ax1.set_xlim(-f0 / 2, f0 / 2)
-    ax1.set_ylim(-f0 / 2, f0 / 2)
-    plt.grid()
-    plot_2d_points(x1, ax1, color=colors)
+    # 復元したシーンデータの表示
+    plotter_3d = ThreeDimensionalPlotter(figsize=(10, 10))
+    plotter_3d.set_lim()
+    plotter_3d.plot_points(X_, color=colors)
+    plotter_3d.plot_basis(np.eye(3), np.zeros(3), label="Camera1")
+    plotter_3d.plot_basis(R, t, label="Camera2")
+    plotter_3d.show()
+    plotter_3d.close()
 
-    # camera2で射影した2次元データ点のプロット
-    ax2 = plt.subplot(1, 2, 2)
-    ax2.set_xlim(-f0 / 2, f0 / 2)
-    ax2.set_ylim(-f0 / 2, f0 / 2)
-    plt.grid()
-    plot_2d_points(x2, ax2, color=colors)
+    # 投影データと復元後の再投影データの表示
+    cameras_ = []
+    for R_pred, t_pred, f_pred in [(np.eye(3), np.zeros(3), f), (R, t, f_prime)]:
+        K_pred = np.diag([f_pred, f_pred, f0])
+        cameras_.append(Camera(R_pred, t_pred, K_pred))
 
-    plt.show()
+    x_list_ = []
+    for camera in cameras_:
+        x = camera.project_points(X_, method="perspective")
+        x_list_.append(x)
 
-    # 復元したデータ点の表示
-    ax = init_3d_ax()
-    plot_3d_points(X_, ax, color=colors)
-    plot_3d_basis(np.eye(3), np.zeros(3), ax, label="Camera1")
-    plot_3d_basis(R, t, ax, label="Camera2")
+    plotter_2d = TwoDimensionalMatrixPlotter(1, 2, (10, 6))
+    for i, x in enumerate([x1, x2]):
+        plotter_2d.select(i)
+        plotter_2d.set_property(f"Camera{i + 1}", (-1, 1), (-1, 1))
+        plotter_2d.plot_points(x, color="green", label="Projection")
+        plotter_2d.plot_points(x_list_[i], color="red", label="Reprojection")
 
-    plt.show()
+    plotter_2d.show()
+    plotter_2d.close()
 
 
 if __name__ == "__main__":
