@@ -112,15 +112,20 @@ def calc_fixed_focal_length(F, f0):
     FFt = F @ F.T
     FtF = F.T @ F
 
+    # (3, 1)
     k = np.array([[0.0], [0.0], [1.0]])
 
+    # (3, 3) @ (3, 1) -> (3, 1)
     Fk = F @ k
     Ftk = F.T @ k
 
     Fk_norm2 = np.linalg.norm(Fk) ** 2
     Ftk_norm2 = np.linalg.norm(Ftk) ** 2
 
+    # (1, 3) @ (3, 1) -> (1, 1) -> ()
     k_dot_Fk = (k.T @ Fk)[0][0]
+
+    # ((1, 3) @ ((3, 3) @ (3, 1))) -> (1, 1) -> ()
     k_dot_FFtFk = (k.T @ (FFt @ Fk))[0][0]
 
     F_norm2 = np.linalg.norm(F) ** 2
