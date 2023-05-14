@@ -1,7 +1,6 @@
-import matplotlib.pyplot as plt
 import numpy as np
 
-from lib.camera3 import Camera
+from lib.camera import Camera
 from lib.epipolar_geometry import (
     calc_camera_matrix,
     calc_epipole,
@@ -20,7 +19,6 @@ from lib.fundamental_matrix import (
     remove_outliers,
 )
 from lib.visualization import ThreeDimensionalPlotter, TwoDimensionalMatrixPlotter
-from lib.utils import unit_vec
 
 
 def set_points():
