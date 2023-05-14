@@ -194,12 +194,6 @@ def calc_fundamental_matrix_8points_method(x1, x2, f0, normalize=True, optimal=T
         x1_ext = x1_ext @ W1.T
         x2_ext = x2_ext @ W2.T
 
-        from lib.visualization import subplot_2d_points
-        import matplotlib.pyplot as plt
-
-        subplot_2d_points(x1_ext[:, :2], x2_ext[:, :2])
-        plt.show()
-
     x1_ext = np.repeat(x1_ext, 3, axis=1)
     x2_ext = np.tile(x2_ext, 3)
 
