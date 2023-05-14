@@ -88,17 +88,12 @@ def main():
     print(f"number of outlier: {outliers.sum()}")
 
     # 基礎行列の計算
-    F1 = calc_fundamental_matrix_8points_method(x1, x2, f0, normalize=True, optimal=True)
-    F2 = calc_fundamental_matrix_taubin_method(x1, x2, f0)
-    F3 = calc_fundamental_matrix_extended_fns_method(x1, x2, f0)
-    F4 = find_fundamental_matrix_cv(x1, x2)
-    F_ = calc_true_F(R1, t1, R2, t2, f_, f_prime_, f0)
-    F = F3
-    print("8points:", F1)
-    print("taubin:", (F1[0, 0] / F2[0, 0]) * F2)
-    print("ext_fns:", (F1[0, 0] / F3[0, 0]) * F3)
-    print("opencv:", (F1[0, 0] / F4[0, 0]) * F4)
-    print("trueF:", (F1[0, 0] / F_[0, 0]) * F_)
+    F = calc_fundamental_matrix_extended_fns_method(x1, x2, f0)
+    # F = calc_fundamental_matrix_8points_method(x1, x2, f0, normalize=True, optimal=True)
+    # F = calc_fundamental_matrix_taubin_method(x1, x2, f0)
+    # F = find_fundamental_matrix_cv(x1, x2)
+    # F_ = calc_true_F(R1, t1, R2, t2, f_, f_prime_, f0)
+    print(f"F=\n{F}")
     # print(f"|F_ - F|=\n{np.linalg.norm(F_ - F)}")
 
     # 対応点の最適補正
@@ -117,11 +112,13 @@ def main():
     # 運動パラメータの計算
     R, t = calc_motion_parameters(F, x1, x2, f, f_prime, f0)
     # R, t = R2 @ R1.T, unit_vec(t2 - t1)
-    print(f"R=\n{R}, \nt=\n{t}")
+    print(f"R=\n{R}")
+    print(f"t={t}")
 
     # カメラ行列の取得
     P, P_prime = calc_camera_matrix(f, f_prime, R, t, f0)
-    print(f"P=\n{P}, \nP_prime=\n{P_prime}")
+    print(f"P=\n{P}")
+    print(f"P_prime=\n{P_prime}")
 
     # 3次元復元
     X_ = reconstruct_3d_points(x1, x2, P, P_prime, f0)
